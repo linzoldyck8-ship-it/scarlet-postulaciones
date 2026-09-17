@@ -3,8 +3,7 @@ import streamlit.components.v1 as components
 import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
-import gspread
-from google.oauth2.service_account import Credentials
+from supabase import create_client, Client
 import re
 import datetime
 
@@ -41,6 +40,15 @@ ETIQUETAS_ID = {
     "Fighting": "ID Jugador"
 }
 
+# Mapeo de nombres de división a nombres de tablas en Supabase
+TABLAS_SUPABASE = {
+    "Valorant": "valorant",
+    "Overwatch": "overwatch",
+    "CS": "cs",
+    "Valorant Femenino": "valorant_femenino",
+    "Fighting": "fighting"
+}
+
 def es_correo_valido(correo):
     patron = r'^[\w\.-]+@[\w\.-]+\.\w+$'
     return re.match(patron, correo) is not None
@@ -74,9 +82,10 @@ st.set_page_config(
     layout="wide"
 )
 
+# Script para bloquear popups y tooltips molestos ("Press Enter...") y tipografía más pequeña
 components.html("""
 <script>
-function bloquearPopups() {
+function bloquearPopupsYTooltips() {
     const doc = window.parent.document;
     
     if (!doc.getElementById('extension-blocker-style')) {
@@ -114,10 +123,20 @@ function bloquearPopups() {
         input.setAttribute('data-form-type', 'other');
         input.setAttribute('aria-autocomplete', 'none');
         input.setAttribute('spellcheck', 'false');
+        if (input.title) {
+            input.title = '';
+        }
+    });
+
+    const tooltips = doc.querySelectorAll('div, span');
+    tooltips.forEach(el => {
+        if (el.innerText && el.innerText.includes('Press Enter to submit form')) {
+            el.style.display = 'none';
+        }
     });
 }
-setTimeout(bloquearPopups, 100);
-setInterval(bloquearPopups, 500);
+setTimeout(bloquearPopupsYTooltips, 100);
+setInterval(bloquearPopupsYTooltips, 300);
 </script>
 """, height=0)
 
@@ -125,6 +144,7 @@ st.markdown("""
     <style>
     html, body, [class*="css"] {
         font-family: 'Arial Black', Arial, sans-serif !important;
+        font-size: 0.92rem !important;
     }
     .stApp {
         background-image: url("https://wallpapers.com/images/hd/pitch-black-leather-like-material-2w1vwucx1o9xzfvu.jpg");
@@ -142,19 +162,19 @@ st.markdown("""
     [data-testid="stMetric"] {
         background-color: rgba(22, 27, 34, 0.85);
         border: 1px solid rgba(255, 70, 85, 0.3);
-        padding: 15px;
+        padding: 10px;
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(255, 70, 85, 0.1);
     }
     [data-testid="stMetricLabel"] {
         color: #8b949e;
-        font-size: 1.2rem !important;
+        font-size: 0.9rem !important;
         font-weight: 600;
     }
     [data-testid="stMetricValue"] {
         color: #ff4655 !important;
         text-shadow: 0 0 8px rgba(255, 70, 85, 0.4);
-        font-size: 2.2rem !important;
+        font-size: 1.5rem !important;
     }
     h1, h2, h3 {
         font-family: 'Arial Black', Arial, sans-serif !important;
@@ -162,18 +182,19 @@ st.markdown("""
     }
     h1 {
         color: #ffffff;
-        text-shadow: 0 0 12px rgba(255, 70, 85, 0.5);
+        font-size: 1.6rem !important;
+        text-shadow: 0 0 10px rgba(255, 70, 85, 0.5);
     }
     div[data-testid="stForm"] label p, div[data-testid="stSelectbox"] label p {
-        font-size: 1.4rem !important;
+        font-size: 1rem !important;
         font-weight: bold;
     }
     div[data-testid="stForm"] div[data-baseweb="select"], 
     div[data-testid="stForm"] input {
-        font-size: 1.3rem !important;
+        font-size: 0.95rem !important;
     }
     ul[role="listbox"] li {
-        font-size: 1.3rem !important;
+        font-size: 0.95rem !important;
     }
 
     div[data-testid="stFormSubmitButton"] button,
@@ -185,16 +206,16 @@ st.markdown("""
         border: 2px solid #ff6b78 !important;
         font-weight: 900 !important;
         font-family: 'Arial Black', Arial, sans-serif !important;
-        padding: 16px 24px !important;
-        min-height: 65px !important;
-        box-shadow: 0 0 20px rgba(255, 70, 85, 0.6) !important;
+        padding: 10px 18px !important;
+        min-height: 45px !important;
+        box-shadow: 0 0 15px rgba(255, 70, 85, 0.6) !important;
         transition: all 0.3s ease-in-out !important;
     }
 
     div[data-testid="stFormSubmitButton"] button *,
     button[kind="primaryFormSubmit"] *,
     button[data-testid="stBaseButton-primaryFormSubmit"] * {
-        font-size: 1.9rem !important;
+        font-size: 1.1rem !important;
         font-weight: 900 !important;
     }
 
@@ -202,15 +223,15 @@ st.markdown("""
     button[kind="primaryFormSubmit"]:hover,
     button[data-testid="stBaseButton-primaryFormSubmit"]:hover {
         background-color: #fa5c68 !important;
-        box-shadow: 0 0 35px rgba(255, 70, 85, 1) !important;
+        box-shadow: 0 0 25px rgba(255, 70, 85, 1) !important;
         transform: scale(1.02);
         color: white !important;
     }
 
     [role="tablist"] {
         background-color: rgba(18, 22, 31, 0.6) !important;
-        gap: 10px !important;
-        padding: 8px 12px !important;
+        gap: 8px !important;
+        padding: 6px 10px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(255, 70, 85, 0.2) !important;
     }
@@ -218,13 +239,13 @@ st.markdown("""
     [role="tab"] {
         background-color: transparent !important;
         border-radius: 6px !important;
-        padding: 8px 20px !important;
+        padding: 6px 16px !important;
         border: 1px solid transparent !important;
         transition: all 0.3s ease-in-out !important;
     }
 
     [role="tab"] p, [role="tab"] div {
-        font-size: 1.15rem !important;
+        font-size: 0.95rem !important;
         font-weight: bold !important;
         color: #8b949e !important;
     }
@@ -240,11 +261,11 @@ st.markdown("""
     [role="tab"][aria-selected="true"] {
         background: linear-gradient(135deg, rgba(255, 70, 85, 0.4) 0%, rgba(255, 70, 85, 0.8) 100%) !important;
         border-color: #ff4655 !important;
-        box-shadow: 0 0 15px rgba(255, 70, 85, 0.5) !important;
+        box-shadow: 0 0 12px rgba(255, 70, 85, 0.5) !important;
     }
     [role="tab"][aria-selected="true"] p, [role="tab"][aria-selected="true"] div {
         color: #ffffff !important;
-        text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+        text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
     }
 
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] {
@@ -253,62 +274,52 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-SHEET_ID = "1a-D3wfr9XBwFIE34wAY-9-16eB3ABHndPsxq_6dbWqE"
-scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-
+# --- CONEXIÓN A SUPABASE ---
 @st.cache_resource(ttl=60)
-def conectar_gsheets():
+def conectar_supabase():
     try:
-        creds_dict = dict(st.secrets["gcp_service_account"])
-        if "private_key" in creds_dict:
-            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-        client = gspread.authorize(creds)
-        workbook = client.open_by_key(SHEET_ID)
-        return workbook
+        url = st.secrets["supabase"]["url"]
+        key = st.secrets["supabase"]["key"]
+        supabase: Client = create_client(url, key)
+        return supabase
     except Exception as e:
-        st.sidebar.error(f"❌ Error de conexión: {e}")
+        st.sidebar.error(f"❌ Error de conexión con Supabase: {e}")
         return None
 
-workbook = conectar_gsheets()
+supabase = conectar_supabase()
 
 @st.cache_data(ttl=10)
 def obtener_password_admin():
-    if not workbook:
+    if not supabase:
         return "cazuela"
     try:
-        ws = workbook.worksheet("Configuracion")
-        val = ws.acell("A2").value
-        return val.strip() if val and val.strip() != "" else "cazuela"
-    except gspread.exceptions.WorksheetNotFound:
-        try:
-            ws = workbook.add_worksheet(title="Configuracion", rows="10", cols="2")
-            ws.update_acell("A1", "Password")
-            ws.update_acell("A2", "cazuela")
-            return "cazuela"
-        except Exception:
-            return "cazuela"
+        response = supabase.table("configuracion").select("valor").eq("clave", "Password").execute()
+        if response.data and len(response.data) > 0:
+            return response.data[0]["valor"].strip()
+        return "cazuela"
     except Exception:
         return "cazuela"
 
 def actualizar_password_admin(nueva_clave):
     try:
-        ws = workbook.worksheet("Configuracion")
-        ws.update_acell("A2", nueva_clave)
+        supabase.table("configuracion").update({"valor": nueva_clave}).eq("clave", "Password").execute()
         st.cache_data.clear()
         return True
     except Exception:
         return False
 
-def obtener_hoja_lista_negra(wb):
+@st.cache_data(ttl=5)
+def load_data_from_supabase(nombre_tabla):
     try:
-        return wb.worksheet("Lista Negra")
-    except gspread.exceptions.WorksheetNotFound:
-        ws = wb.add_worksheet(title="Lista Negra", rows="1000", cols="5")
-        ws.append_row(["ID_Jugador", "Contacto", "Fecha_Vetado", "Motivo", "División_Origen"])
-        return ws
+        response = supabase.table(nombre_tabla).select("*").execute()
+        data = response.data
+        if data:
+            df = pd.DataFrame(data)
+            return df
+        else:
+            return pd.DataFrame()
     except Exception:
-        return None
+        return pd.DataFrame()
 
 tab_formulario, tab_dashboard = st.tabs(["📝 Postularme al Roster", "📊 Panel Gerencial (Dashboard)"])
 
@@ -333,21 +344,21 @@ with tab_formulario:
                     background: rgba(22, 27, 34, 0.85);
                     border: 2px solid rgba(255, 70, 85, 0.5);
                     border-radius: 10px;
-                    padding: 14px 10px;
+                    padding: 10px 6px;
                     text-align: center;
                     box-shadow: 0 0 15px rgba(255, 70, 85, 0.2);
-                    margin-bottom: 20px;
+                    margin-bottom: 15px;
                 ">
-                    <span style="color: #ff4655; font-size: 1.35rem; font-weight: 900; display: block; margin-bottom: 6px;">
+                    <span style="color: #ff4655; font-size: 1rem; font-weight: 900; display: block; margin-bottom: 4px;">
                         ⏰ {sub_nombre}
                     </span>
-                    <span style="color: #ffffff; font-size: 1.65rem; font-weight: 900; display: block; margin-bottom: 4px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);">
+                    <span style="color: #ffffff; font-size: 1.1rem; font-weight: 900; display: block; margin-bottom: 3px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);">
                         {info['horario']}
                     </span>
-                    <span style="color: #a3b1c2; font-size: 1.05rem; font-weight: bold; display: block; margin-bottom: 10px;">
+                    <span style="color: #a3b1c2; font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 6px;">
                         (Hora Chile)
                     </span>
-                    <span style="color: #ff4655; font-size: 1.15rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
+                    <span style="color: #ff4655; font-size: 0.9rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
                         RANGO MÍNIMO: <span style="color: #ffffff;">{info['rango']}</span>
                     </span>
                 </div>
@@ -398,7 +409,7 @@ with tab_formulario:
             baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
             notas = st.text_input("Link de Tracker / VODs / Notas adicionales")
 
-        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
         col_espacio, col_boton = st.columns([1, 1])
         with col_boton:
             submitted = st.form_submit_button("🚀 Enviar Postulación", use_container_width=True)
@@ -412,52 +423,69 @@ with tab_formulario:
                 st.error("⚠️ Por favor ingresa un correo electrónico válido (Ejemplo: usuario@dominio.com).")
             elif edad < 14:
                 st.error("⚠️ Debes tener al menos 14 años para postularte a Scarlet Esports.")
-            elif not workbook:
-                st.error("⚠️ Error de conexión con Google Sheets.")
+            elif not supabase:
+                st.error("⚠️ Error de conexión con Supabase.")
             else:
                 try:
-                    ws_bl = obtener_hoja_lista_negra(workbook)
-                    registros_bl = ws_bl.get_all_values() if ws_bl else []
+                    # Verificar lista negra
+                    res_bl = supabase.table("lista_negra").select("*").execute()
+                    registros_bl = res_bl.data if res_bl.data else []
                     esta_vetado = False
                     
-                    for fila_bl in registros_bl[1:]:
-                        if len(fila_bl) > 1:
-                            id_vetado = fila_bl[0].strip().lower()
-                            contacto_vetado = fila_bl[1].strip().lower()
-                            
-                            if (id_vetado and id_vetado == player_id.strip().lower()) or \
-                               (contacto_vetado and (contacto_vetado == contacto_formateado.lower() or contacto_vetado == contacto_valor.strip().lower())):
-                                esta_vetado = True
-                                break
+                    for fila_bl in registros_bl:
+                        id_vetado = str(fila_bl.get("id_jugador", "")).strip().lower()
+                        contacto_vetado = str(fila_bl.get("contacto", "")).strip().lower()
+                        
+                        if (id_vetado and id_vetado == player_id.strip().lower()) or \
+                           (contacto_vetado and (contacto_vetado == contacto_formateado.lower() or contacto_vetado == contacto_valor.strip().lower())):
+                            esta_vetado = True
+                            break
                     
                     if esta_vetado:
                         st.error("❌ Tu postulación ha sido rechazada automáticamente. No cumples con los requisitos de ingreso para Scarlet Esports.")
                     else:
-                        ws = workbook.worksheet(division)
-                        registros_existentes = ws.get_all_values()
+                        tabla_db = TABLAS_SUPABASE[division]
+                        res_existentes = supabase.table(tabla_db).select("*").execute()
+                        registros_existentes = res_existentes.data if res_existentes.data else []
+                        
                         duplicado = False
-                        for fila in registros_existentes[1:]:
-                            if len(fila) > 1 and (
-                                fila[0].strip().lower() == player_id.strip().lower() or 
-                                fila[1].strip().lower() == contacto_formateado.lower() or
-                                fila[1].strip().lower() == contacto_valor.strip().lower()
-                            ):
+                        for fila in registros_existentes:
+                            pid = str(fila.get("player_id", "")).strip().lower()
+                            cont = str(fila.get("contacto", "")).strip().lower()
+                            if pid == player_id.strip().lower() or cont == contacto_formateado.lower() or cont == contacto_valor.strip().lower():
                                 duplicado = True
                                 break
                         
                         if duplicado:
                             st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Contacto en esta división.")
                         else:
-                            if division in ["Valorant", "Valorant Femenino"]:
-                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
-                            elif division == "Overwatch":
-                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
-                            elif division == "CS":
-                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                            if division in ["Valorant", "Valorant Femenino", "Overwatch", "CS"]:
+                                nuevo_registro = {
+                                    "player_id": player_id,
+                                    "contacto": contacto_formateado,
+                                    "edad": int(edad),
+                                    "rango_actual": rango_actual,
+                                    "rol": rol,
+                                    "peak_elo": peak_elo,
+                                    "baneos": baneos,
+                                    "estado": "Tryout",
+                                    "notas": notas
+                                }
                             elif division == "Fighting":
-                                nueva_fila = [player_id, contacto_formateado, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas]
+                                nuevo_registro = {
+                                    "player_id": player_id,
+                                    "contacto": contacto_formateado,
+                                    "edad": int(edad),
+                                    "juego_especifico": juego_esp,
+                                    "personaje": personaje,
+                                    "rango_actual": rango_actual,
+                                    "peak_elo": peak_elo,
+                                    "baneos": baneos,
+                                    "estado": "Tryout",
+                                    "notas": notas
+                                }
                             
-                            ws.append_row(nueva_fila)
+                            supabase.table(tabla_db).insert(nuevo_registro).execute()
                             st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
                             
                 except Exception as e:
@@ -511,22 +539,8 @@ with tab_dashboard:
 
         st.sidebar.markdown("---")
 
-        @st.cache_data(ttl=5)
-        def load_data_from_sheet(sheet_name):
-            try:
-                ws = workbook.worksheet(sheet_name)
-                data = ws.get_all_values()
-                if len(data) > 1:
-                    headers = data[0]
-                    headers = [h if h.strip() != "" else f"Col_Extra_{i}" for i, h in enumerate(headers)]
-                    df = pd.DataFrame(data[1:], columns=headers)
-                    return df
-                else:
-                    return pd.DataFrame(columns=data[0] if data else [])
-            except Exception:
-                return pd.DataFrame()
-
-        df = load_data_from_sheet(div_dashboard)
+        tabla_actual = TABLAS_SUPABASE[div_dashboard]
+        df = load_data_from_supabase(tabla_actual)
 
         with st.sidebar.expander("🔑 Cambiar Contraseña Gerencial"):
             with st.form("form_cambio_pass", clear_on_submit=True):
@@ -548,20 +562,18 @@ with tab_dashboard:
                             st.success("✅ ¡Contraseña actualizada exitosamente!")
                             admin_password = pwd_nueva.strip() 
                         else:
-                            st.error("❌ Error al guardar la nueva contraseña en Google Sheets.")
+                            st.error("❌ Error al guardar la nueva contraseña en Supabase.")
 
         with st.sidebar.expander("🚫 Vetar / Mover a Lista Negra"):
-            if not df.empty:
-                col_id_name = df.columns[0]
-                col_contact_name = df.columns[1] if len(df.columns) > 1 else col_id_name
-                tipo_id_actual = ETIQUETAS_ID.get(div_dashboard, "ID Jugador")
-                
+            if not df.empty and "id" in df.columns:
                 opciones_postulantes_bl = {}
                 for idx, row in df.iterrows():
-                    val_id = row[col_id_name]
-                    val_contacto = row[col_contact_name]
+                    val_id = row.get("player_id", "")
+                    val_contacto = row.get("contacto", "")
+                    row_id = row.get("id")
+                    tipo_id_actual = ETIQUETAS_ID.get(div_dashboard, "ID Jugador")
                     etiqueta = f"🎮 {tipo_id_actual}: {val_id} ({val_contacto})"
-                    opciones_postulantes_bl[etiqueta] = (idx + 2, val_id, val_contacto)
+                    opciones_postulantes_bl[etiqueta] = (row_id, val_id, val_contacto)
                 
                 postulante_bl_sel = st.selectbox("Selecciona al postulante a vetar", list(opciones_postulantes_bl.keys()), key="sb_vetar")
                 motivo_bl = st.text_input("Motivo del veto (Opcional):", placeholder="Ej: Comportamiento tóxico / Incumplimiento")
@@ -572,14 +584,18 @@ with tab_dashboard:
                 if st.button("🚫 Vetar y Enviar a Lista Negra"):
                     if pwd_bl == admin_password:
                         try:
-                            fila_a_borrar, val_id, val_contacto = opciones_postulantes_bl[postulante_bl_sel]
-                            
-                            ws_bl = obtener_hoja_lista_negra(workbook)
+                            row_id, val_id, val_contacto = opciones_postulantes_bl[postulante_bl_sel]
                             fecha_hoy = datetime.date.today().strftime("%Y-%m-%d")
-                            ws_bl.append_row([val_id, val_contacto, fecha_hoy, motivo_bl if motivo_bl.strip() else "Sin motivo especificado", div_dashboard])
                             
-                            ws_del = workbook.worksheet(div_dashboard)
-                            ws_del.delete_rows(fila_a_borrar)
+                            supabase.table("lista_negra").insert({
+                                "id_jugador": val_id,
+                                "contacto": val_contacto,
+                                "fecha_vetado": fecha_hoy,
+                                "motivo": motivo_bl if motivo_bl.strip() else "Sin motivo especificado",
+                                "division_origen": div_dashboard
+                            }).execute()
+                            
+                            supabase.table(tabla_actual).delete().eq("id", row_id).execute()
                             
                             st.cache_data.clear()
                             st.session_state["bl_count"] += 1
@@ -594,15 +610,16 @@ with tab_dashboard:
                 st.info("No hay postulantes registrados en esta división.")
 
         with st.sidebar.expander("🟢 Desvetar / Quitar de Lista Negra"):
-            df_bl_data = load_data_from_sheet("Lista Negra")
-            if not df_bl_data.empty:
+            df_bl_data = load_data_from_supabase("lista_negra")
+            if not df_bl_data.empty and "id" in df_bl_data.columns:
                 opciones_desvetar = {}
                 for idx, row in df_bl_data.iterrows():
-                    val_id = row[df_bl_data.columns[0]]
-                    val_contacto = row[df_bl_data.columns[1]] if len(df_bl_data.columns) > 1 else ""
-                    div_orig = row[df_bl_data.columns[4]] if len(df_bl_data.columns) > 4 else "Desconocida"
+                    val_id = row.get("id_jugador", "")
+                    val_contacto = row.get("contacto", "")
+                    div_orig = row.get("division_origen", "Desconocida")
+                    row_id = row.get("id")
                     etiqueta = f"🎮 {val_id} ({val_contacto}) - [{div_orig}]"
-                    opciones_desvetar[etiqueta] = idx + 2
+                    opciones_desvetar[etiqueta] = row_id
                 
                 player_to_unvet = st.selectbox("Selecciona jugador a desvetar", list(opciones_desvetar.keys()), key="sb_desvetar")
                 
@@ -612,14 +629,13 @@ with tab_dashboard:
                 if st.button("🟢 Desvetar y Permitir Postulaciones"):
                     if pwd_unbl == admin_password:
                         try:
-                            fila_a_borrar_bl = opciones_desvetar[player_to_unvet]
-                            ws_bl_del = obtener_hoja_lista_negra(workbook)
-                            ws_bl_del.delete_rows(fila_a_borrar_bl)
+                            row_id_bl = opciones_desvetar[player_to_unvet]
+                            supabase.table("lista_negra").delete().eq("id", row_id_bl).execute()
                             
                             st.cache_data.clear()
                             st.session_state["unbl_count"] += 1
                             
-                            st.sidebar.success("✅ Jugador retirado de la Lista Negra con éxito. Ahora puede volver a postularse.")
+                            st.sidebar.success("✅ Jugador retirado de la Lista Negra con éxito.")
                             st.rerun()
                         except Exception as e:
                             st.sidebar.error(f"❌ Error al desvetar jugador: {e}")
@@ -629,17 +645,15 @@ with tab_dashboard:
                 st.info("No hay jugadores actualmente en la Lista Negra.")
 
         with st.sidebar.expander("👤 Borrar Postulante (Sin Vetar)"):
-            if not df.empty:
-                col_id_name = df.columns[0]
-                col_contact_name = df.columns[1] if len(df.columns) > 1 else col_id_name
-                tipo_id_actual = ETIQUETAS_ID.get(div_dashboard, "ID Jugador")
-                
+            if not df.empty and "id" in df.columns:
                 opciones_postulantes = {}
                 for idx, row in df.iterrows():
-                    val_id = row[col_id_name]
-                    val_contacto = row[col_contact_name]
+                    val_id = row.get("player_id", "")
+                    val_contacto = row.get("contacto", "")
+                    row_id = row.get("id")
+                    tipo_id_actual = ETIQUETAS_ID.get(div_dashboard, "ID Jugador")
                     etiqueta = f"🎮 {tipo_id_actual}: {val_id} ({val_contacto})"
-                    opciones_postulantes[etiqueta] = idx + 2
+                    opciones_postulantes[etiqueta] = row_id
                 
                 postulante_sel = st.selectbox("Selecciona al postulante a eliminar", list(opciones_postulantes.keys()))
                 
@@ -649,9 +663,8 @@ with tab_dashboard:
                 if st.button("❌ Eliminar Postulante Seleccionado"):
                     if pwd_del_indiv == admin_password:
                         try:
-                            fila_a_borrar = opciones_postulantes[postulante_sel]
-                            ws_del = workbook.worksheet(div_dashboard)
-                            ws_del.delete_rows(fila_a_borrar)
+                            row_id = opciones_postulantes[postulante_sel]
+                            supabase.table(tabla_actual).delete().eq("id", row_id).execute()
                             st.cache_data.clear()
                             
                             st.session_state["del_count"] += 1
@@ -666,7 +679,7 @@ with tab_dashboard:
 
         with st.sidebar.expander("🚨 Zona de Peligro (Limpiar DB)"):
             st.warning(f"⚠️ Estás a punto de BORRAR TODOS los postulantes de: **{div_dashboard}**")
-            st.caption("Esta acción no afectará a las otras divisiones y conservará los encabezados.")
+            st.caption("Esta acción vaciará completamente la tabla de esta división.")
             
             key_wipe = f"confirm_pwd_wipe_{st.session_state['wipe_count']}"
             pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar toda la DB:", type="password", key=key_wipe)
@@ -674,8 +687,8 @@ with tab_dashboard:
             if st.button(f"🗑️ Limpiar DB de {div_dashboard}", type="primary"):
                 if pwd_confirm == admin_password:
                     try:
-                        ws_clean = workbook.worksheet(div_dashboard)
-                        ws_clean.batch_clear(["A2:Z1000"])
+                        # En Supabase borramos todos los registros de la tabla
+                        supabase.table(tabla_actual).delete().neq("id", 0).execute()
                         st.cache_data.clear()
                         
                         st.session_state["wipe_count"] += 1
@@ -698,20 +711,19 @@ with tab_dashboard:
                 
                 col_estado = next((c for c in df.columns if 'estado' in c.lower()), None)
                 if not col_estado:
-                    df['Estado'] = 'Tryout'
-                    col_estado = 'Estado'
+                    df['estado'] = 'Tryout'
+                    col_estado = 'estado'
 
-                col_contacto = next((c for c in df.columns if 'contacto' in c.lower() or 'discord' in c.lower()), df.columns[1])
+                col_contacto = next((c for c in df.columns if 'contacto' in c.lower()), 'contacto')
                 
                 total_postulantes = len(df[df[col_contacto] != ''])
                 tryouts_activos = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'tryout']) 
                 aceptados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'aceptado']) 
                 rechazados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'rechazado'])
                 
-                df_bl_metric = load_data_from_sheet("Lista Negra")
-                if not df_bl_metric.empty and len(df_bl_metric.columns) >= 5:
-                    col_div_orig = df_bl_metric.columns[4]
-                    en_lista_negra = len(df_bl_metric[df_bl_metric[col_div_orig].astype(str).str.strip() == div_dashboard])
+                df_bl_metric = load_data_from_supabase("lista_negra")
+                if not df_bl_metric.empty and "division_origen" in df_bl_metric.columns:
+                    en_lista_negra = len(df_bl_metric[df_bl_metric["division_origen"].astype(str).str.strip() == div_dashboard])
                 else:
                     en_lista_negra = 0
 
@@ -760,20 +772,18 @@ with tab_dashboard:
                             st.plotly_chart(fig_roles, use_container_width=True)
 
                 st.subheader("📋 Registro Detallado")
-                st.dataframe(df, use_container_width=True)
+                # Ocultamos la columna 'id' interna de Supabase para mayor prolijidad visual si existe
+                df_display = df.drop(columns=['id']) if 'id' in df.columns else df
+                st.dataframe(df_display, use_container_width=True)
 
             st.markdown("---")
             with st.expander(f"👀 Ver Jugadores Vetados en {div_dashboard} (Lista Negra)"):
-                df_bl = load_data_from_sheet("Lista Negra")
-                if not df_bl.empty:
-                    col_div_orig = next((c for c in df_bl.columns if 'división' in c.lower() or 'origen' in c.lower()), None)
-                    if col_div_orig:
-                        df_bl_filtered = df_bl[df_bl[col_div_orig].astype(str).str.strip() == div_dashboard]
-                    else:
-                        df_bl_filtered = df_bl
-                    
+                df_bl = load_data_from_supabase("lista_negra")
+                if not df_bl.empty and "division_origen" in df_bl.columns:
+                    df_bl_filtered = df_bl[df_bl["division_origen"].astype(str).str.strip() == div_dashboard]
                     if not df_bl_filtered.empty:
-                        st.dataframe(df_bl_filtered, use_container_width=True)
+                        df_bl_display = df_bl_filtered.drop(columns=['id']) if 'id' in df_bl_filtered.columns else df_bl_filtered
+                        st.dataframe(df_bl_display, use_container_width=True)
                     else:
                         st.info(f"Actualmente no hay jugadores vetados en la Lista Negra para la división {div_dashboard}.")
                 else:
@@ -784,11 +794,7 @@ with tab_dashboard:
             st.markdown("Busca y edita el estado de los postulantes directamente en la tabla interactiva y haz clic en **Guardar Cambios**.")
             
             if not df.empty:
-                col_estado_mod = next((c for c in df.columns if 'estado' in c.lower()), None)
-                if not col_estado_mod:
-                    df['Estado'] = 'Tryout'
-                    col_estado_mod = 'Estado'
-                
+                col_estado_mod = next((c for c in df.columns if 'estado' in c.lower()), 'estado')
                 df[col_estado_mod] = df[col_estado_mod].astype(str).str.capitalize()
                 
                 column_config_dict = {
@@ -802,8 +808,10 @@ with tab_dashboard:
                 
                 disabled_cols = [c for c in df.columns if c != col_estado_mod]
                 
+                df_editor = df.drop(columns=['id']) if 'id' in df.columns else df
+                
                 edited_df = st.data_editor(
-                    df,
+                    df_editor,
                     column_config=column_config_dict,
                     disabled=disabled_cols,
                     key=f"data_editor_{div_dashboard}",
@@ -813,22 +821,19 @@ with tab_dashboard:
                 
                 if st.button("💾 Guardar Cambios de Estado", use_container_width=True):
                     try:
-                        ws_estado = workbook.worksheet(div_dashboard)
-                        col_idx = df.columns.tolist().index(col_estado_mod) + 1
-                        
                         cambios_realizados = 0
                         for idx in range(len(df)):
                             val_original = str(df.iloc[idx][col_estado_mod]).strip()
                             val_nuevo = str(edited_df.iloc[idx][col_estado_mod]).strip()
                             
                             if val_original != val_nuevo:
-                                fila_excel = idx + 2
-                                ws_estado.update_cell(fila_excel, col_idx, val_nuevo)
+                                row_id = df.iloc[idx]['id']
+                                supabase.table(tabla_actual).update({col_estado_mod: val_nuevo}).eq("id", row_id).execute()
                                 cambios_realizados += 1
                         
                         st.cache_data.clear()
                         if cambios_realizados > 0:
-                            st.success(f"✅ Se actualizaron {cambios_realizados} estados correctamente en Google Sheets.")
+                            st.success(f"✅ Se actualizaron {cambios_realizados} estados correctamente en Supabase.")
                             st.rerun()
                         else:
                             st.info("ℹ️ No se detectaron cambios en los estados.")
