@@ -393,11 +393,9 @@ with tab_formulario:
 
 # --- APARTADO DASHBOARD ---
 with tab_dashboard:
-    # Inicialización del estado de autenticación en la sesión del navegador
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
 
-    # SI NO ESTÁ AUTENTICADO: MOSTRAR FORMULARIO DE ACCESO
     if not st.session_state["autenticado"]:
         st.subheader("🔒 Acceso Restringido")
         with st.form("login_gerencia"):
@@ -412,13 +410,11 @@ with tab_dashboard:
                 else:
                     st.error("❌ Contraseña incorrecta. Acceso denegado.")
                     
-    # SI YA ESTÁ AUTENTICADO: MOSTRAR EL PANEL COMPLETO
     else:
         count = st_autorefresh(interval=10000, limit=None, key="scarlet_autorefresh")
 
         st.title("🔥 PANEL GERENCIAL SCARLET ESPORTS")
         
-        # Botón para cerrar sesión en la barra lateral
         if st.sidebar.button("🚪 Cerrar Sesión Admin"):
             st.session_state["autenticado"] = False
             st.rerun()
@@ -474,6 +470,10 @@ with tab_dashboard:
                             ws_del = workbook.worksheet(div_dashboard)
                             ws_del.delete_rows(fila_a_borrar)
                             st.cache_data.clear()
+                            
+                            # Vaciamos la casilla de contraseña para requerirla nuevamente
+                            st.session_state["pwd_del_indiv"] = ""
+                            
                             st.sidebar.success(f"✅ Postulante eliminado con éxito.")
                             st.rerun()
                         except Exception as e:
@@ -495,6 +495,10 @@ with tab_dashboard:
                         ws_clean = workbook.worksheet(div_dashboard)
                         ws_clean.batch_clear(["A2:Z1000"])
                         st.cache_data.clear()
+                        
+                        # Vaciamos la casilla de contraseña para requerirla nuevamente
+                        st.session_state["confirm_pwd_wipe"] = ""
+                        
                         st.sidebar.success(f"✅ Base de datos de {div_dashboard} limpiada correctamente.")
                         st.rerun()
                     except Exception as e:
