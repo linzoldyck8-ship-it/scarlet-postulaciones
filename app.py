@@ -89,8 +89,8 @@ st.markdown("""
         color: #ffffff;
         text-shadow: 0 0 12px rgba(255, 70, 85, 0.5);
     }
-    div[data-testid="stForm"] label p {
-        font-size: 1.5rem !important;
+    div[data-testid="stForm"] label p, div[data-testid="stSelectbox"] label p {
+        font-size: 1.4rem !important;
         font-weight: bold;
     }
     div[data-testid="stForm"] div[data-baseweb="select"], 
@@ -190,9 +190,14 @@ tab_formulario, tab_dashboard = st.tabs(["📝 Postularme al Roster", "📊 Pane
 # --- APARTADO FORMULARIO ---
 with tab_formulario:
     st.title("📝 Formulario de Postulación - Scarlet Esports")
-    st.markdown("Selecciona la división a la que deseas aplicar y completa tus datos correctamente.")
+    st.markdown("Selecciona la división y tu método de contacto preferido para completar tus datos.")
 
-    division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
+    # --- CONTROLES INTERACTIVOS (FUERA DEL FORMULARIO PARA ACTUALIZACIÓN EN TIEMPO REAL) ---
+    col_sel1, col_sel2 = st.columns(2)
+    with col_sel1:
+        division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
+    with col_sel2:
+        tipo_contacto = st.selectbox("📞 Método de Contacto Preferido", ["Discord", "Instagram", "Número Telefónico", "Correo Electrónico"])
 
     # --- MOSTRAR HORARIOS SEGÚN LA DIVISIÓN SELECCIONADA ---
     if division in HORARIOS_DIVISIONES:
@@ -224,10 +229,17 @@ with tab_formulario:
         col_f1, col_f2 = st.columns(2)
         
         with col_f1:
-            # --- SELECCIÓN Y VALIDACIÓN DE MÉTODO DE CONTACTO ---
-            tipo_contacto = st.selectbox("Método de Contacto Preferido", ["Discord", "Instagram", "Número Telefónico", "Correo Electrónico"])
-            contacto_valor = st.text_input(f"Ingresa tu {tipo_contacto}", autocomplete="off")
-            
+            # Texto dinámico según la opción seleccionada afuera
+            if tipo_contacto == "Discord":
+                placeholder_txt = "Ej: usuario_discord o Scarlet#1234"
+            elif tipo_contacto == "Instagram":
+                placeholder_txt = "Ej: @mi_usuario_ig"
+            elif tipo_contacto == "Número Telefónico":
+                placeholder_txt = "Ej: +56912345678"
+            else:
+                placeholder_txt = "Ej: usuario@gmail.com"
+
+            contacto_valor = st.text_input(f"Ingresa tu {tipo_contacto}", placeholder=placeholder_txt, autocomplete="off")
             edad = st.number_input("Edad", min_value=10, max_value=80, value=18, step=1)
             
             if division in ["Valorant", "Valorant Femenino"]:
@@ -266,7 +278,7 @@ with tab_formulario:
             contacto_formateado = f"{tipo_contacto}: {contacto_valor.strip()}"
             
             if not contacto_valor.strip() or not player_id.strip():
-                st.error("⚠️ Por favor completa tu Información de Contacto y tu ID de Jugador.")
+                st.error(f"⚠️ Por favor ingresa tu {tipo_contacto} y tu ID de Jugador.")
             elif tipo_contacto == "Correo Electrónico" and not es_correo_valido(contacto_valor.strip()):
                 st.error("⚠️ Por favor ingresa un correo electrónico válido (Ejemplo: usuario@dominio.com).")
             elif edad < 14:
