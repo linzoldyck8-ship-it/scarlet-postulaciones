@@ -6,6 +6,7 @@ from streamlit_autorefresh import st_autorefresh
 import gspread
 from google.oauth2.service_account import Credentials
 import re  # Expresiones regulares para validar el correo electrónico
+import datetime  # Para registrar fechas de veto
 
 # --- LISTAS DETALLADAS DE RANGOS POR JUEGO ---
 RANGOS_VALORANT = [
@@ -252,6 +253,17 @@ def conectar_gsheets():
 
 workbook = conectar_gsheets()
 
+# --- FUNCIÓN AUXILIAR PARA OBTENER O CREAR HOJA DE LISTA NEGRA ---
+def obtener_hoja_lista_negra(wb):
+    try:
+        return wb.worksheet("Lista Negra")
+    except gspread.exceptions.WorksheetNotFound:
+        ws = wb.add_worksheet(title="Lista Negra", rows="1000", cols="5")
+        ws.append_row(["ID_Jugador", "Contacto", "Fecha_Vetado", "Motivo", "División_Origen"])
+        return ws
+    except Exception as e:
+        return None
+
 tab_formulario, tab_dashboard = st.tabs(["📝 Postularme al Roster", "📊 Panel Gerencial (Dashboard)"])
 
 # --- APARTADO FORMULARIO ---
@@ -359,34 +371,51 @@ with tab_formulario:
                 st.error("⚠️ Error de conexión con Google Sheets.")
             else:
                 try:
-                    ws = workbook.worksheet(division)
+                    # --- COMPROBACIÓN DE LISTA NEGRA ---
+                    ws_bl = obtener_hoja_lista_negra(workbook)
+                    registros_bl = ws_bl.get_all_values() if ws_bl else []
+                    esta_vetado = False
                     
-                    registros_existentes = ws.get_all_values()
-                    duplicado = False
-                    for fila in registros_existentes[1:]:
-                        if len(fila) > 1 and (
-                            fila[0].strip().lower() == player_id.strip().lower() or 
-                            fila[1].strip().lower() == contacto_formateado.lower() or
-                            fila[1].strip().lower() == contacto_valor.strip().lower()
-                        ):
-                            duplicado = True
-                            break
+                    for fila_bl in registros_bl[1:]:
+                        if len(fila_bl) > 1:
+                            id_vetado = fila_bl[0].strip().lower()
+                            contacto_vetado = fila_bl[1].strip().lower()
+                            
+                            if (id_vetado and id_vetado == player_id.strip().lower()) or \
+                               (contacto_vetado and (contacto_vetado == contacto_formateado.lower() or contacto_vetado == contacto_valor.strip().lower())):
+                                esta_vetado = True
+                                break
                     
-                    if duplicado:
-                        st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Contacto en esta división.")
+                    if esta_vetado:
+                        st.error("❌ Tu postulación ha sido rechazada automáticamente. No cumples con los requisitos de ingreso para Scarlet Esports.")
                     else:
-                        if division in ["Valorant", "Valorant Femenino"]:
-                            nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
-                        elif division == "Overwatch":
-                            nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
-                        elif division == "CS GO":
-                            nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
-                        elif division == "Fighting":
-                            nueva_fila = [player_id, contacto_formateado, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas]
+                        ws = workbook.worksheet(division)
+                        registros_existentes = ws.get_all_values()
+                        duplicado = False
+                        for fila in registros_existentes[1:]:
+                            if len(fila) > 1 and (
+                                fila[0].strip().lower() == player_id.strip().lower() or 
+                                fila[1].strip().lower() == contacto_formateado.lower() or
+                                fila[1].strip().lower() == contacto_valor.strip().lower()
+                            ):
+                                duplicado = True
+                                break
                         
-                        ws.append_row(nueva_fila)
-                        st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
-                        
+                        if duplicado:
+                            st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Contacto en esta división.")
+                        else:
+                            if division in ["Valorant", "Valorant Femenino"]:
+                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                            elif division == "Overwatch":
+                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                            elif division == "CS GO":
+                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                            elif division == "Fighting":
+                                nueva_fila = [player_id, contacto_formateado, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas]
+                            
+                            ws.append_row(nueva_fila)
+                            st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
+                            
                 except Exception as e:
                     st.error(f"Hubo un error al registrar tus datos: {e}")
 
@@ -401,6 +430,8 @@ with tab_dashboard:
         st.session_state["del_count"] = 0
     if "wipe_count" not in st.session_state:
         st.session_state["wipe_count"] = 0
+    if "bl_count" not in st.session_state:
+        st.session_state["bl_count"] = 0
 
     if not st.session_state["autenticado"]:
         st.subheader("🔒 Acceso Restringido")
@@ -452,8 +483,54 @@ with tab_dashboard:
 
         df = load_data_from_sheet(div_dashboard)
 
-        # --- SECCIÓN DE GESTIÓN GERENCIAL (BORRAR ESPECÍFICO) ---
-        with st.sidebar.expander("👤 Borrar Postulante Específico"):
+        # --- SECCIÓN: MOVER A LISTA NEGRA (VETAR) ---
+        with st.sidebar.expander("🚫 Vetar / Mover a Lista Negra"):
+            if not df.empty:
+                col_id_name = df.columns[0]
+                col_contact_name = df.columns[1] if len(df.columns) > 1 else col_id_name
+                tipo_id_actual = ETIQUETAS_ID.get(div_dashboard, "ID Jugador")
+                
+                opciones_postulantes_bl = {}
+                for idx, row in df.iterrows():
+                    val_id = row[col_id_name]
+                    val_contacto = row[col_contact_name]
+                    etiqueta = f"🎮 {tipo_id_actual}: {val_id} ({val_contacto})"
+                    opciones_postulantes_bl[etiqueta] = (idx + 2, val_id, val_contacto)
+                
+                postulante_bl_sel = st.selectbox("Selecciona al postulante a vetar", list(opciones_postulantes_bl.keys()), key="sb_vetar")
+                motivo_bl = st.text_input("Motivo del veto (Opcional):", placeholder="Ej: Comportamiento tóxico / Incumplimiento")
+                
+                key_bl = f"pwd_bl_{st.session_state['bl_count']}"
+                pwd_bl = st.text_input("Confirma contraseña gerencial:", type="password", key=key_bl)
+                
+                if st.button("🚫 Vetar y Enviar a Lista Negra"):
+                    if pwd_bl == "cazuela":
+                        try:
+                            fila_a_borrar, val_id, val_contacto = opciones_postulantes_bl[postulante_bl_sel]
+                            
+                            # 1. Guardar en Hoja 'Lista Negra'
+                            ws_bl = obtener_hoja_lista_negra(workbook)
+                            fecha_hoy = datetime.date.today().strftime("%Y-%m-%d")
+                            ws_bl.append_row([val_id, val_contacto, fecha_hoy, motivo_bl if motivo_bl.strip() else "Sin motivo especificado", div_dashboard])
+                            
+                            # 2. Borrar de la lista actual
+                            ws_del = workbook.worksheet(div_dashboard)
+                            ws_del.delete_rows(fila_a_borrar)
+                            
+                            st.cache_data.clear()
+                            st.session_state["bl_count"] += 1
+                            
+                            st.sidebar.success(f"✅ Postulante vetado con éxito y añadido a la Lista Negra.")
+                            st.rerun()
+                        except Exception as e:
+                            st.sidebar.error(f"❌ Error al vetar postulante: {e}")
+                    else:
+                        st.sidebar.error("❌ Contraseña incorrecta.")
+            else:
+                st.info("No hay postulantes registrados en esta división.")
+
+        # --- SECCIÓN: BORRAR ESPECÍFICO (SIN VETAR) ---
+        with st.sidebar.expander("👤 Borrar Postulante (Sin Vetar)"):
             if not df.empty:
                 col_id_name = df.columns[0]
                 col_contact_name = df.columns[1] if len(df.columns) > 1 else col_id_name
@@ -468,9 +545,8 @@ with tab_dashboard:
                 
                 postulante_sel = st.selectbox("Selecciona al postulante a eliminar", list(opciones_postulantes.keys()))
                 
-                # Clave dinámica para forzar campo limpio al cambiar de estado
                 key_del = f"pwd_del_indiv_{st.session_state['del_count']}"
-                pwd_del_indiv = st.text_input("Confirma contraseña gerencial para eliminar:", type="password", key=key_del)
+                pwd_del_indiv = st.text_input("Confirma contraseña para eliminar:", type="password", key=key_del)
                 
                 if st.button("❌ Eliminar Postulante Seleccionado"):
                     if pwd_del_indiv == "cazuela":
@@ -480,9 +556,7 @@ with tab_dashboard:
                             ws_del.delete_rows(fila_a_borrar)
                             st.cache_data.clear()
                             
-                            # Incrementamos contador para vaciar el input automáticamente al recargar
                             st.session_state["del_count"] += 1
-                            
                             st.sidebar.success(f"✅ Postulante eliminado con éxito.")
                             st.rerun()
                         except Exception as e:
@@ -492,11 +566,11 @@ with tab_dashboard:
             else:
                 st.info("No hay postulantes registrados en esta división.")
 
+        # --- SECCIÓN: LIMPIAR BASE DE DATOS TOTAL ---
         with st.sidebar.expander("🚨 Zona de Peligro (Limpiar DB)"):
             st.warning(f"⚠️ Estás a punto de BORRAR TODOS los postulantes de: **{div_dashboard}**")
             st.caption("Esta acción no afectará a las otras divisiones y conservará los encabezados.")
             
-            # Clave dinámica para la limpieza total
             key_wipe = f"confirm_pwd_wipe_{st.session_state['wipe_count']}"
             pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar toda la DB:", type="password", key=key_wipe)
             
@@ -507,9 +581,7 @@ with tab_dashboard:
                         ws_clean.batch_clear(["A2:Z1000"])
                         st.cache_data.clear()
                         
-                        # Incrementamos contador para vaciar el input automáticamente al recargar
                         st.session_state["wipe_count"] += 1
-                        
                         st.sidebar.success(f"✅ Base de datos de {div_dashboard} limpiada correctamente.")
                         st.rerun()
                     except Exception as e:
@@ -576,3 +648,12 @@ with tab_dashboard:
 
             st.subheader("📋 Registro Detallado")
             st.dataframe(df, use_container_width=True)
+
+        # --- PESTAÑA INFORMATIVA DE LISTA NEGRA ---
+        st.markdown("---")
+        with st.expander("👀 Ver Registro General de Jugadores Vetados (Lista Negra)"):
+            df_bl = load_data_from_sheet("Lista Negra")
+            if not df_bl.empty:
+                st.dataframe(df_bl, use_container_width=True)
+            else:
+                st.info("Actualmente no hay jugadores vetados en la Lista Negra.")
