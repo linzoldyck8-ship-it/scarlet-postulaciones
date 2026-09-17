@@ -559,6 +559,10 @@ with tab_dashboard:
                 else:
                     if actualizar_password_admin(pwd_nueva.strip()):
                         st.sidebar.success("✅ ¡Contraseña actualizada exitosamente!")
+                        # Limpiar las casillas de texto en la interfaz
+                        st.session_state["chg_pwd_curr"] = ""
+                        st.session_state["chg_pwd_new"] = ""
+                        st.session_state["chg_pwd_conf"] = ""
                         st.rerun()
                     else:
                         st.sidebar.error("❌ Error al guardar la nueva contraseña en Google Sheets.")
