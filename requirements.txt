@@ -4,3 +4,4 @@ pandas
 plotly
 gspread
 streamlit-autorefresh
+supabase
