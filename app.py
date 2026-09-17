@@ -644,6 +644,57 @@ with tab_dashboard:
             else:
                 st.info("No hay jugadores actualmente en la Lista Negra.")
 
+        # --- SECCIÓN: MODIFICAR ESTADO DE POSTULANTE ---
+        with st.sidebar.expander("📝 Modificar Estado de Postulante"):
+            if not df.empty:
+                col_estado_mod = next((c for c in df.columns if 'estado' in c.lower()), None)
+                if not col_estado_mod:
+                    col_estado_mod = df.columns[-2]
+                
+                col_id_name_mod = df.columns[0]
+                
+                opciones_estado = {}
+                for idx, row in df.iterrows():
+                    val_id = row[col_id_name_mod]
+                    estado_actual = str(row[col_estado_mod]).strip() if pd.notna(row[col_estado_mod]) else "Desconocido"
+                    etiqueta = f"🎮 {val_id} | Estado: {estado_actual}"
+                    opciones_estado[etiqueta] = (idx + 2, estado_actual)
+                
+                postulante_sel_estado = st.selectbox("Selecciona al postulante", list(opciones_estado.keys()), key="sb_modificar_estado")
+                
+                estado_previo = opciones_estado[postulante_sel_estado][1]
+                lista_estados = ["Tryout", "Aceptado", "Rechazado", "Vetado"]
+                
+                index_defecto = lista_estados.index(estado_previo.capitalize()) if estado_previo.capitalize() in lista_estados else 0
+                nuevo_estado = st.selectbox("Nuevo Estado", lista_estados, index=index_defecto)
+                
+                if "estado_count" not in st.session_state:
+                    st.session_state["estado_count"] = 0
+                
+                key_estado = f"pwd_estado_{st.session_state['estado_count']}"
+                pwd_estado = st.text_input("Confirma contraseña gerencial para guardar:", type="password", key=key_estado)
+                
+                if st.button("💾 Guardar Nuevo Estado", use_container_width=True):
+                    if pwd_estado == admin_password:
+                        try:
+                            fila_a_modificar = opciones_estado[postulante_sel_estado][0]
+                            col_idx = df.columns.tolist().index(col_estado_mod) + 1
+                            
+                            ws_estado = workbook.worksheet(div_dashboard)
+                            ws_estado.update_cell(fila_a_modificar, col_idx, nuevo_estado)
+                            
+                            st.cache_data.clear()
+                            st.session_state["estado_count"] += 1
+                            
+                            st.sidebar.success(f"✅ Estado actualizado a '{nuevo_estado}' con éxito.")
+                            st.rerun()
+                        except Exception as e:
+                            st.sidebar.error(f"❌ Error al actualizar el estado: {e}")
+                    else:
+                        st.sidebar.error("❌ Contraseña incorrecta. Modificación cancelada.")
+            else:
+                st.info("No hay postulantes registrados en esta división.")
+
         # --- SECCIÓN: BORRAR ESPECÍFICO (SIN VETAR) ---
         with st.sidebar.expander("👤 Borrar Postulante (Sin Vetar)"):
             if not df.empty:
