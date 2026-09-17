@@ -80,23 +80,53 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- SCRIPT JS PARA DESACTIVAR POPUPS DE EXTENSIONES Y AUTOCOMPLETADO ---
+# --- SCRIPT JS Y CSS AGRESIVO PARA BLOQUEAR EXTENSIONES Y OVERLAYS ---
 components.html("""
 <script>
 function bloquearPopups() {
     const doc = window.parent.document;
-    const inputs = doc.querySelectorAll('input');
+    
+    // Inyectar estilos para ocultar elementos emergentes de extensiones conocidas
+    if (!doc.getElementById('extension-blocker-style')) {
+        const style = doc.createElement('style');
+        style.id = 'extension-blocker-style';
+        style.innerHTML = `
+            [data-protonpass-icon],
+            [data-lastpass-icon-root],
+            [data-bw-icon],
+            iframe[src*="relay"],
+            iframe[src*="firefox"],
+            div[class*="relay-input"],
+            div[id*="relay"],
+            div[class*="protonpass"],
+            div[data-1password-type],
+            div[class*="passwords-"] {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+        `;
+        doc.head.appendChild(style);
+    }
+
+    // Aplicar atributos anti-autocompletado y de exclusión a los inputs
+    const inputs = doc.querySelectorAll('input, textarea');
     inputs.forEach(input => {
-        input.setAttribute('autocomplete', 'new-password');
+        input.setAttribute('autocomplete', 'off');
         input.setAttribute('data-bwignore', 'true');
         input.setAttribute('data-lpignore', 'true');
         input.setAttribute('data-1p-ignore', 'true');
+        input.setAttribute('data-protonpass-ignore', 'true');
+        input.setAttribute('data-dashlane-ignore', 'true');
+        input.setAttribute('data-nordpass-ignore', 'true');
         input.setAttribute('data-form-type', 'other');
         input.setAttribute('aria-autocomplete', 'none');
+        input.setAttribute('spellcheck', 'false');
     });
 }
-setTimeout(bloquearPopups, 300);
-setInterval(bloquearPopups, 1500);
+setTimeout(bloquearPopups, 100);
+setInterval(bloquearPopups, 500);
 </script>
 """, height=0)
 
