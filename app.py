@@ -60,7 +60,7 @@ HORARIOS_DIVISIONES = {
         "División C": {"horario": "17:00 - 20:00 (Fines de semana)", "rango": "Eagle / 10k+"}
     },
     "Overwatch": {
-        "División A": {"horario": "20:00 - 23:00 (Mar, Jue, Sáb)", "rango": "Gran Maestro"},
+        "División A": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "Gran Maestro"},
         "División B": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "Platino"},
         "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
