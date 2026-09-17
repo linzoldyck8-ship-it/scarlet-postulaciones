@@ -387,29 +387,6 @@ with tab_dashboard:
 
         st.sidebar.markdown("---")
 
-        # --- SECCIÓN DE LIMPIEZA DE BASE DE DATOS POR DIVISIÓN ---
-        with st.sidebar.expander("🚨 Zona de Peligro (Limpiar DB)"):
-            st.warning(f"⚠️ Estás a punto de BORRAR todos los postulantes de: **{div_dashboard}**")
-            st.caption("Esta acción no afectará a las otras divisiones y conservará los encabezados.")
-            
-            pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar:", type="password", key="confirm_pwd_wipe")
-            
-            if st.button(f"🗑️ Limpiar DB de {div_dashboard}", type="primary"):
-                if pwd_confirm == "cazuela":
-                    try:
-                        ws_clean = workbook.worksheet(div_dashboard)
-                        # Borra el contenido de la fila 2 en adelante para mantener las columnas intactas
-                        ws_clean.batch_clear(["A2:Z1000"])
-                        st.cache_data.clear()
-                        st.sidebar.success(f"✅ Base de datos de {div_dashboard} limpiada correctamente.")
-                        st.rerun()
-                    except Exception as e:
-                        st.sidebar.error(f"❌ Error al intentar borrar: {e}")
-                else:
-                    st.sidebar.error("❌ Contraseña incorrecta. Borrado cancelado.")
-
-        st.sidebar.markdown("---")
-
         @st.cache_data(ttl=5)
         def load_data_from_sheet(sheet_name):
             try:
@@ -426,6 +403,58 @@ with tab_dashboard:
                 return pd.DataFrame()
 
         df = load_data_from_sheet(div_dashboard)
+
+        # --- SECCIÓN DE GESTIÓN GERENCIAL (BORRAR ESPECÍFICO Y BASE DE DATOS) ---
+        with st.sidebar.expander("👤 Borrar Postulante Específico"):
+            if not df.empty:
+                col_id_name = df.columns[0]
+                col_contact_name = df.columns[1] if len(df.columns) > 1 else col_id_name
+                
+                # Lista desplegable de postulantes con ID y contacto
+                opciones_postulantes = {
+                    f"Fila {idx + 2}: {row[col_id_name]} ({row[col_contact_name]})": idx + 2
+                    for idx, row in df.iterrows()
+                }
+                
+                postulante_sel = st.selectbox("Selecciona al postulante a eliminar", list(opciones_postulantes.keys()))
+                pwd_del_indiv = st.text_input("Confirma contraseña gerencial para eliminar:", type="password", key="pwd_del_indiv")
+                
+                if st.button("❌ Eliminar Postulante Seleccionado"):
+                    if pwd_del_indiv == "cazuela":
+                        try:
+                            fila_a_borrar = opciones_postulantes[postulante_sel]
+                            ws_del = workbook.worksheet(div_dashboard)
+                            ws_del.delete_rows(fila_a_borrar)
+                            st.cache_data.clear()
+                            st.sidebar.success(f"✅ Postulante de la fila {fila_a_borrar} eliminado con éxito.")
+                            st.rerun()
+                        except Exception as e:
+                            st.sidebar.error(f"❌ Error al eliminar postulante: {e}")
+                    else:
+                        st.sidebar.error("❌ Contraseña incorrecta. Borrado cancelado.")
+            else:
+                st.info("No hay postulantes registrados en esta división.")
+
+        with st.sidebar.expander("🚨 Zona de Peligro (Limpiar DB)"):
+            st.warning(f"⚠️ Estás a punto de BORRAR TODOS los postulantes de: **{div_dashboard}**")
+            st.caption("Esta acción no afectará a las otras divisiones y conservará los encabezados.")
+            
+            pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar toda la DB:", type="password", key="confirm_pwd_wipe")
+            
+            if st.button(f"🗑️ Limpiar DB de {div_dashboard}", type="primary"):
+                if pwd_confirm == "cazuela":
+                    try:
+                        ws_clean = workbook.worksheet(div_dashboard)
+                        ws_clean.batch_clear(["A2:Z1000"])
+                        st.cache_data.clear()
+                        st.sidebar.success(f"✅ Base de datos de {div_dashboard} limpiada correctamente.")
+                        st.rerun()
+                    except Exception as e:
+                        st.sidebar.error(f"❌ Error al intentar borrar: {e}")
+                else:
+                    st.sidebar.error("❌ Contraseña incorrecta. Borrado cancelado.")
+
+        st.sidebar.markdown("---")
 
         if df.empty:
             st.warning(f"⚠️ Aún no hay datos de postulantes para la división {div_dashboard}.")
