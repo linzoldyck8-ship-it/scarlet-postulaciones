@@ -14,27 +14,27 @@ def es_correo_valido(correo):
 # --- CONFIGURACIÓN DE HORARIOS POR DIVISIÓN Y SUBDIVISIÓN ---
 HORARIOS_DIVISIONES = {
     "Valorant": {
-        "División A": "20:00 - 23:00 (Lun a Vie)",
-        "División B": "18:00 - 21:00 (Lun a Vie)",
-        "División C": "16:00 - 19:00 (Sáb y Dom)"
+        "División A": {"horario": "20:00 - 23:00 (Lun a Vie)", "rango": "Inmortal"},
+        "División B": {"horario": "18:00 - 21:00 (Lun a Vie)", "rango": "Ascendente"},
+        "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "CS GO": {
-        "División A": "21:00 - 00:00 (Lun a Vie)",
-        "División B": "19:00 - 22:00 (Mar a Sáb)",
-        "División C": "17:00 - 20:00 (Fines de semana)"
+        "División A": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "Global / 20k+"},
+        "División B": {"horario": "19:00 - 22:00 (Mar a Sáb)", "rango": "Supreme / 15k+"},
+        "División C": {"horario": "17:00 - 20:00 (Fines de semana)", "rango": "Eagle / 10k+"}
     },
     "Overwatch": {
-        "División A": "20:00 - 23:00 (Mar, Jue, Sáb)",
-        "División B": "18:00 - 21:00 (Lun, Mié, Vie)",
-        "División C": "16:00 - 19:00 (Sáb y Dom)"
+        "División A": {"horario": "20:00 - 23:00 (Mar, Jue, Sáb)", "rango": "Gran Maestro"},
+        "División B": {"horario": "18:00 - 21:00 (Lun, Mié, Vie)", "rango": "Maestro"},
+        "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "Valorant Femenino": {
-        "División A": "19:00 - 22:00 (Lun a Jue)",
-        "División B": "17:00 - 20:00 (Vie a Dom)"
+        "División A": {"horario": "19:00 - 22:00 (Lun a Jue)", "rango": "Ascendente"},
+        "División B": {"horario": "17:00 - 20:00 (Vie a Dom)", "rango": "Platino"}
     },
     "Fighting": {
-        "División A": "20:00 - 22:00 (Mié y Vie)",
-        "División B": "18:00 - 20:00 (Sáb y Dom)"
+        "División A": {"horario": "20:00 - 22:00 (Mié y Vie)", "rango": "Master / High Rank"},
+        "División B": {"horario": "18:00 - 20:00 (Sáb y Dom)", "rango": "Diamond+"}
     }
 }
 
