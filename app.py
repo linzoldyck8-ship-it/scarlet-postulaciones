@@ -63,8 +63,7 @@ HORARIOS_DIVISIONES = {
         "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "Valorant Femenino": {
-        "División A": {"horario": "19:00 - 22:00 (Lun a Jue)", "rango": "Ascendente"},
-        "División B": {"horario": "17:00 - 20:00 (Vie a Dom)", "rango": "Platino"}
+        "División A": {"horario": "21:00 - 23:00 (Lun a Vie)", "rango": "Ascendente"},
     },
     "Fighting": {
         "División A": {"horario": "20:00 - 22:00 (Mié y Vie)", "rango": "Master / High Rank"},
