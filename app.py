@@ -164,17 +164,29 @@ with tab_formulario:
                 try:
                     ws = workbook.worksheet(division)
                     
-                    if division in ["Valorant", "Valorant Femenino"]:
-                        nueva_fila = [player_id, contacto_discord, rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
-                    elif division == "Overwatch":
-                        nueva_fila = [player_id, contacto_discord, rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
-                    elif division == "CS GO":
-                        nueva_fila = [player_id, contacto_discord, rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
-                    elif division == "Fighting":
-                        nueva_fila = [player_id, contacto_discord, juego_esp, personaje, rango_actual, peak_elo, baneos, horario, "Tryout", notas]
+                    # --- COMPROBACIÓN DE DUPLICADOS ---
+                    registros_existentes = ws.get_all_values()
+                    duplicado = False
+                    for fila in registros_existentes[1:]:
+                        if len(fila) > 1 and (fila[0].strip().lower() == player_id.strip().lower() or fila[1].strip().lower() == contacto_discord.strip().lower()):
+                            duplicado = True
+                            break
                     
-                    ws.append_row(nueva_fila)
-                    st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
+                    if duplicado:
+                        st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Usuario de Discord en esta división.")
+                    else:
+                        if division in ["Valorant", "Valorant Femenino"]:
+                            nueva_fila = [player_id, contacto_discord, rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
+                        elif division == "Overwatch":
+                            nueva_fila = [player_id, contacto_discord, rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
+                        elif division == "CS GO":
+                            nueva_fila = [player_id, contacto_discord, rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
+                        elif division == "Fighting":
+                            nueva_fila = [player_id, contacto_discord, juego_esp, personaje, rango_actual, peak_elo, baneos, horario, "Tryout", notas]
+                        
+                        ws.append_row(nueva_fila)
+                        st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
+                        
                 except Exception as e:
                     st.error(f"Hubo un error al registrar tus datos: {e}")
 
