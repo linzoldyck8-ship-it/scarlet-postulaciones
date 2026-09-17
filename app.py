@@ -192,7 +192,7 @@ with tab_formulario:
     st.title("📝 Formulario de Postulación - Scarlet Esports")
     st.markdown("Selecciona la división y tu método de contacto preferido para completar tus datos.")
 
-    # --- CONTROLES INTERACTIVOS ---
+    # --- CONTROLES INTERACTIVOS (FUERA DEL FORMULARIO PARA ACTUALIZACIÓN EN TIEMPO REAL) ---
     col_sel1, col_sel2 = st.columns(2)
     with col_sel1:
         division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
@@ -211,21 +211,18 @@ with tab_formulario:
                     background: rgba(22, 27, 34, 0.85);
                     border: 1px solid rgba(255, 70, 85, 0.4);
                     border-radius: 8px;
-                    padding: 16px 12px;
+                    padding: 12px;
                     text-align: center;
                     box-shadow: 0 0 10px rgba(255, 70, 85, 0.15);
                     margin-bottom: 20px;
                 ">
-                    <span style="color: #ff4655; font-size: 1.3rem; font-weight: bold; display: block; margin-bottom: 6px;">
+                    <span style="color: #ff4655; font-size: 1.1rem; font-weight: bold; display: block; margin-bottom: 4px;">
                         ⏰ {sub_nombre}
                     </span>
-                    <span style="color: #ffffff; font-size: 1.35rem; font-weight: bold; display: block; margin-bottom: 6px;">
-                        {info['horario']}
+                    <span style="color: #f0f2f6; font-size: 0.95rem; display: block; margin-bottom: 6px;">
+                        {info['horario']} <span style="color: #8b949e; font-size: 0.85rem;">(Hora Chile)</span>
                     </span>
-                    <span style="color: #8b949e; font-size: 1.05rem; display: block; margin-bottom: 8px;">
-                        (Hora Chile)
-                    </span>
-                    <span style="color: #ff4655; font-size: 1.05rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
+                    <span style="color: #ff4655; font-size: 0.85rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
                         RANGO MÍNIMO: <span style="color: #ffffff;">{info['rango']}</span>
                     </span>
                 </div>
@@ -235,6 +232,7 @@ with tab_formulario:
         col_f1, col_f2 = st.columns(2)
         
         with col_f1:
+            # Texto dinámico según la opción seleccionada afuera
             if tipo_contacto == "Discord":
                 placeholder_txt = "Ej: usuario_discord o Scarlet#1234"
             elif tipo_contacto == "Instagram":
