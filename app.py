@@ -31,7 +31,7 @@ RANGOS_OVERWATCH = [
     "Campeón"
 ]
 
-# DICIONARIO PARA ETIQUETAR LOS IDS SEGÚN LA DIVISIÓN
+# DICCIONARIO PARA ETIQUETAR LOS IDS SEGÚN LA DIVISIÓN
 ETIQUETAS_ID = {
     "Valorant": "Riot ID",
     "Valorant Femenino": "Riot ID",
@@ -396,6 +396,12 @@ with tab_dashboard:
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
 
+    # Contadores para resetear campos de texto mediante claves dinámicas
+    if "del_count" not in st.session_state:
+        st.session_state["del_count"] = 0
+    if "wipe_count" not in st.session_state:
+        st.session_state["wipe_count"] = 0
+
     if not st.session_state["autenticado"]:
         st.subheader("🔒 Acceso Restringido")
         with st.form("login_gerencia"):
@@ -461,7 +467,10 @@ with tab_dashboard:
                     opciones_postulantes[etiqueta] = idx + 2
                 
                 postulante_sel = st.selectbox("Selecciona al postulante a eliminar", list(opciones_postulantes.keys()))
-                pwd_del_indiv = st.text_input("Confirma contraseña gerencial para eliminar:", type="password", key="pwd_del_indiv")
+                
+                # Clave dinámica para forzar campo limpio al cambiar de estado
+                key_del = f"pwd_del_indiv_{st.session_state['del_count']}"
+                pwd_del_indiv = st.text_input("Confirma contraseña gerencial para eliminar:", type="password", key=key_del)
                 
                 if st.button("❌ Eliminar Postulante Seleccionado"):
                     if pwd_del_indiv == "cazuela":
@@ -471,8 +480,8 @@ with tab_dashboard:
                             ws_del.delete_rows(fila_a_borrar)
                             st.cache_data.clear()
                             
-                            # Vaciamos la casilla de contraseña para requerirla nuevamente
-                            st.session_state["pwd_del_indiv"] = ""
+                            # Incrementamos contador para vaciar el input automáticamente al recargar
+                            st.session_state["del_count"] += 1
                             
                             st.sidebar.success(f"✅ Postulante eliminado con éxito.")
                             st.rerun()
@@ -487,7 +496,9 @@ with tab_dashboard:
             st.warning(f"⚠️ Estás a punto de BORRAR TODOS los postulantes de: **{div_dashboard}**")
             st.caption("Esta acción no afectará a las otras divisiones y conservará los encabezados.")
             
-            pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar toda la DB:", type="password", key="confirm_pwd_wipe")
+            # Clave dinámica para la limpieza total
+            key_wipe = f"confirm_pwd_wipe_{st.session_state['wipe_count']}"
+            pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar toda la DB:", type="password", key=key_wipe)
             
             if st.button(f"🗑️ Limpiar DB de {div_dashboard}", type="primary"):
                 if pwd_confirm == "cazuela":
@@ -496,8 +507,8 @@ with tab_dashboard:
                         ws_clean.batch_clear(["A2:Z1000"])
                         st.cache_data.clear()
                         
-                        # Vaciamos la casilla de contraseña para requerirla nuevamente
-                        st.session_state["confirm_pwd_wipe"] = ""
+                        # Incrementamos contador para vaciar el input automáticamente al recargar
+                        st.session_state["wipe_count"] += 1
                         
                         st.sidebar.success(f"✅ Base de datos de {div_dashboard} limpiada correctamente.")
                         st.rerun()
