@@ -86,7 +86,6 @@ components.html("""
 function bloquearPopups() {
     const doc = window.parent.document;
     
-    // Inyectar estilos para ocultar elementos emergentes de extensiones conocidas
     if (!doc.getElementById('extension-blocker-style')) {
         const style = doc.createElement('style');
         style.id = 'extension-blocker-style';
@@ -110,7 +109,6 @@ function bloquearPopups() {
         doc.head.appendChild(style);
     }
 
-    // Aplicar atributos anti-autocompletado y de exclusión a los inputs
     const inputs = doc.querySelectorAll('input, textarea');
     inputs.forEach(input => {
         input.setAttribute('autocomplete', 'off');
@@ -283,6 +281,35 @@ def conectar_gsheets():
 
 workbook = conectar_gsheets()
 
+# --- FUNCIÓN PARA OBTENER Y ACTUALIZAR LA CONTRASEÑA ADMIN ---
+@st.cache_data(ttl=10)
+def obtener_password_admin():
+    if not workbook:
+        return "cazuela"
+    try:
+        ws = workbook.worksheet("Configuracion")
+        val = ws.acell("A2").value
+        return val.strip() if val and val.strip() != "" else "cazuela"
+    except gspread.exceptions.WorksheetNotFound:
+        try:
+            ws = workbook.add_worksheet(title="Configuracion", rows="10", cols="2")
+            ws.update_acell("A1", "Password")
+            ws.update_acell("A2", "cazuela")
+            return "cazuela"
+        except Exception:
+            return "cazuela"
+    except Exception:
+        return "cazuela"
+
+def actualizar_password_admin(nueva_clave):
+    try:
+        ws = workbook.worksheet("Configuracion")
+        ws.update_acell("A2", nueva_clave)
+        st.cache_data.clear()
+        return True
+    except Exception:
+        return False
+
 # --- FUNCIÓN AUXILIAR PARA OBTENER O CREAR HOJA DE LISTA NEGRA ---
 def obtener_hoja_lista_negra(wb):
     try:
@@ -291,7 +318,7 @@ def obtener_hoja_lista_negra(wb):
         ws = wb.add_worksheet(title="Lista Negra", rows="1000", cols="5")
         ws.append_row(["ID_Jugador", "Contacto", "Fecha_Vetado", "Motivo", "División_Origen"])
         return ws
-    except Exception as e:
+    except Exception:
         return None
 
 tab_formulario, tab_dashboard = st.tabs(["📝 Postularme al Roster", "📊 Panel Gerencial (Dashboard)"])
@@ -455,7 +482,6 @@ with tab_dashboard:
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
 
-    # Contadores para resetear campos de texto mediante claves dinámicas
     if "del_count" not in st.session_state:
         st.session_state["del_count"] = 0
     if "wipe_count" not in st.session_state:
@@ -465,6 +491,8 @@ with tab_dashboard:
     if "unbl_count" not in st.session_state:
         st.session_state["unbl_count"] = 0
 
+    admin_password = obtener_password_admin()
+
     if not st.session_state["autenticado"]:
         st.subheader("🔒 Acceso Restringido")
         with st.form("login_gerencia"):
@@ -472,7 +500,7 @@ with tab_dashboard:
             btn_login = st.form_submit_button("🔓 Iniciar Sesión")
             
             if btn_login:
-                if clave_acceso == "cazuela":
+                if clave_acceso == admin_password:
                     st.session_state["autenticado"] = True
                     st.success("✅ Acceso concedido.")
                     st.rerun()
@@ -510,10 +538,30 @@ with tab_dashboard:
                     return df
                 else:
                     return pd.DataFrame(columns=data[0] if data else [])
-            except Exception as e:
+            except Exception:
                 return pd.DataFrame()
 
         df = load_data_from_sheet(div_dashboard)
+
+        # --- SECCIÓN: CAMBIAR CONTRASEÑA ADMIN ---
+        with st.sidebar.expander("🔑 Cambiar Contraseña Gerencial"):
+            pwd_actual = st.text_input("Contraseña Actual:", type="password", key="chg_pwd_curr")
+            pwd_nueva = st.text_input("Nueva Contraseña:", type="password", key="chg_pwd_new")
+            pwd_conf = st.text_input("Confirmar Nueva Contraseña:", type="password", key="chg_pwd_conf")
+            
+            if st.button("🔑 Guardar Nueva Contraseña"):
+                if pwd_actual != admin_password:
+                    st.sidebar.error("❌ La contraseña actual es incorrecta.")
+                elif not pwd_nueva.strip():
+                    st.sidebar.error("⚠️ La nueva contraseña no puede estar vacía.")
+                elif pwd_nueva != pwd_conf:
+                    st.sidebar.error("⚠️ Las nuevas contraseñas no coinciden.")
+                else:
+                    if actualizar_password_admin(pwd_nueva.strip()):
+                        st.sidebar.success("✅ ¡Contraseña actualizada exitosamente!")
+                        st.rerun()
+                    else:
+                        st.sidebar.error("❌ Error al guardar la nueva contraseña en Google Sheets.")
 
         # --- SECCIÓN: MOVER A LISTA NEGRA (VETAR) ---
         with st.sidebar.expander("🚫 Vetar / Mover a Lista Negra"):
@@ -536,16 +584,14 @@ with tab_dashboard:
                 pwd_bl = st.text_input("Confirma contraseña gerencial:", type="password", key=key_bl)
                 
                 if st.button("🚫 Vetar y Enviar a Lista Negra"):
-                    if pwd_bl == "cazuela":
+                    if pwd_bl == admin_password:
                         try:
                             fila_a_borrar, val_id, val_contacto = opciones_postulantes_bl[postulante_bl_sel]
                             
-                            # 1. Guardar en Hoja 'Lista Negra'
                             ws_bl = obtener_hoja_lista_negra(workbook)
                             fecha_hoy = datetime.date.today().strftime("%Y-%m-%d")
                             ws_bl.append_row([val_id, val_contacto, fecha_hoy, motivo_bl if motivo_bl.strip() else "Sin motivo especificado", div_dashboard])
                             
-                            # 2. Borrar de la lista actual
                             ws_del = workbook.worksheet(div_dashboard)
                             ws_del.delete_rows(fila_a_borrar)
                             
@@ -571,7 +617,7 @@ with tab_dashboard:
                     val_contacto = row[df_bl_data.columns[1]] if len(df_bl_data.columns) > 1 else ""
                     div_orig = row[df_bl_data.columns[4]] if len(df_bl_data.columns) > 4 else "Desconocida"
                     etiqueta = f"🎮 {val_id} ({val_contacto}) - [{div_orig}]"
-                    opciones_desvetar[etiqueta] = idx + 2  # Fila en la hoja (+2 por encabezado)
+                    opciones_desvetar[etiqueta] = idx + 2
                 
                 player_to_unvet = st.selectbox("Selecciona jugador a desvetar", list(opciones_desvetar.keys()), key="sb_desvetar")
                 
@@ -579,7 +625,7 @@ with tab_dashboard:
                 pwd_unbl = st.text_input("Confirma contraseña gerencial para desvetar:", type="password", key=key_unbl)
                 
                 if st.button("🟢 Desvetar y Permitir Postulaciones"):
-                    if pwd_unbl == "cazuela":
+                    if pwd_unbl == admin_password:
                         try:
                             fila_a_borrar_bl = opciones_desvetar[player_to_unvet]
                             ws_bl_del = obtener_hoja_lista_negra(workbook)
@@ -617,7 +663,7 @@ with tab_dashboard:
                 pwd_del_indiv = st.text_input("Confirma contraseña para eliminar:", type="password", key=key_del)
                 
                 if st.button("❌ Eliminar Postulante Seleccionado"):
-                    if pwd_del_indiv == "cazuela":
+                    if pwd_del_indiv == admin_password:
                         try:
                             fila_a_borrar = opciones_postulantes[postulante_sel]
                             ws_del = workbook.worksheet(div_dashboard)
@@ -643,7 +689,7 @@ with tab_dashboard:
             pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar toda la DB:", type="password", key=key_wipe)
             
             if st.button(f"🗑️ Limpiar DB de {div_dashboard}", type="primary"):
-                if pwd_confirm == "cazuela":
+                if pwd_confirm == admin_password:
                     try:
                         ws_clean = workbook.worksheet(div_dashboard)
                         ws_clean.batch_clear(["A2:Z1000"])
