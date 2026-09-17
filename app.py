@@ -114,7 +114,9 @@ with tab_formulario:
     st.title("📝 Formulario de Postulación - Scarlet Esports")
     st.markdown("Selecciona la división a la que deseas aplicar y completa tus datos correctamente.")
 
-    division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
+    # Listas oficiales permitidas para validación posterior
+    opciones_division = ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"]
+    division = st.selectbox("🎮 Selecciona la División", opciones_division)
 
     with st.form("form_postulacion"):
         col_f1, col_f2 = st.columns(2)
@@ -125,39 +127,58 @@ with tab_formulario:
             
             if division in ["Valorant", "Valorant Femenino"]:
                 player_id = st.text_input("Riot ID (Ej: Scarlet#NA1)", autocomplete="off")
-                rol = st.selectbox("Rol", ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"])
-                rango_actual = st.selectbox("Rango Actual", ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"])
-                peak_elo = st.selectbox("Peak Elo", ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"])
+                roles_validos = ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"]
+                rol = st.selectbox("Rol", roles_validos)
+                rangos_val = ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"]
+                rango_actual = st.selectbox("Rango Actual", rangos_val)
+                peak_elo = st.selectbox("Peak Elo", rangos_val)
             
             elif division == "Overwatch":
                 player_id = st.text_input("BattleTag (Ej: Scarlet#1234)", autocomplete="off")
-                rol = st.selectbox("Rol", ["Tanque", "DPS", "Support", "Flex"])
-                rango_actual = st.selectbox("Rango Actual", ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"])
-                peak_elo = st.selectbox("Peak Elo", ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"])
+                roles_validos = ["Tanque", "DPS", "Support", "Flex"]
+                rol = st.selectbox("Rol", roles_validos)
+                rangos_val = ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"]
+                rango_actual = st.selectbox("Rango Actual", rangos_val)
+                peak_elo = st.selectbox("Peak Elo", rangos_val)
             
             elif division == "CS GO":
                 player_id = st.text_input("Steam ID o Link de Perfil", autocomplete="off")
-                rol = st.selectbox("Rol", ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Flex"])
+                roles_validos = ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Flex"]
+                rol = st.selectbox("Rol", roles_validos)
                 rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k)", autocomplete="off")
                 peak_elo = st.text_input("Peak Elo / Max Rating", autocomplete="off")
                 
             elif division == "Fighting":
                 player_id = st.text_input("ID del Jugador (CFN, Tekken ID, etc.)", autocomplete="off")
-                juego_esp = st.selectbox("Juego Específico", ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"])
+                juegos_validos = ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"]
+                juego_esp = st.selectbox("Juego Específico", juegos_validos)
                 personaje = st.text_input("Personaje(s) Main", autocomplete="off")
                 rango_actual = st.text_input("Rango Actual", autocomplete="off")
                 peak_elo = st.text_input("Peak Elo", autocomplete="off")
 
         with col_f2:
-            baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
-            horario = st.selectbox("Horario Disponible", ["Mañana", "Tarde", "Noche", "Madrugada", "Flexible"])
+            baneos_validos = ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"]
+            baneos = st.selectbox("Historial de Baneos / Toxicidad", baneos_validos)
+            
+            horarios_validos = ["Mañana", "Tarde", "Noche", "Madrugada", "Flexible"]
+            horario = st.selectbox("Horario Disponible", horarios_validos)
+            
             notas = st.text_input("Link de Tracker / VODs / Notas adicionales", autocomplete="off")
             
             st.markdown("<br><br>", unsafe_allow_html=True) 
             submitted = st.form_submit_button("🚀 Enviar Postulación")
 
         if submitted:
-            if not contacto_discord or not player_id:
+            # Validación estricta para evitar que ingresen valores alterados manualmente en selects
+            if division == "Fighting" and juego_esp not in ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"]:
+                st.error("⚠️ Selecciona un juego válido de la lista desplegable.")
+            elif division in ["Valorant", "Valorant Femenino", "Overwatch", "CS GO"] and rol not in roles_validos:
+                st.error("⚠️ Selecciona un rol válido de la lista desplegable.")
+            elif baneo_invalido := (baneos not in baneos_validos):
+                st.error("⚠️ Selecciona un historial de baneos válido de la lista.")
+            elif horario not in horarios_validos:
+                st.error("⚠️ Selecciona un horario disponible válido de la lista.")
+            elif not contacto_discord or not player_id:
                 st.error("⚠️ Por favor completa tu Contacto de Discord y tu ID de Jugador.")
             elif edad < 14:
                 st.error("⚠️ Debes tener al menos 14 años para postularte a Scarlet Esports.")
