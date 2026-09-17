@@ -30,6 +30,7 @@ HORARIOS_DIVISIONES = {
     },
     "Valorant Femenino": {
         "División A": {"horario": "19:00 - 22:00 (Lun a Jue)", "rango": "Ascendente"},
+        "División B": {"horario": "17:00 - 20:00 (Vie a Dom)", "rango": "Platino"}
     },
     "Fighting": {
         "División A": {"horario": "20:00 - 22:00 (Mié y Vie)", "rango": "Master / High Rank"},
@@ -219,7 +220,7 @@ with tab_formulario:
                         ⏰ {sub_nombre}
                     </span>
                     <span style="color: #f0f2f6; font-size: 0.95rem; display: block; margin-bottom: 6px;">
-                        {info['horario']}
+                        {info['horario']} <span style="color: #8b949e; font-size: 0.85rem;">(Hora Chile)</span>
                     </span>
                     <span style="color: #ff4655; font-size: 0.85rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
                         RANGO MÍNIMO: <span style="color: #ffffff;">{info['rango']}</span>
