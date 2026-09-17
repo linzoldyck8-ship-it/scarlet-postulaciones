@@ -100,22 +100,33 @@ st.markdown("""
     ul[role="listbox"] li {
         font-size: 1.3rem !important;
     }
-    .stButton>button {
-        background-color: #ff4655;
-        color: white;
-        border-radius: 6px;
-        border: 1px solid #ff6b78;
-        font-weight: bold;
-        font-family: 'Arial Black', Arial, sans-serif !important;
-        font-size: 1.3rem !important; 
-        box-shadow: 0 0 10px rgba(255, 70, 85, 0.4);
-        transition: 0.3s;
-        padding: 10px 24px;
+
+    /* --- ESTILO Y POSICIONAMIENTO DEL BOTÓN ENVIAR POSTULACIÓN --- */
+    div[data-testid="stFormSubmitButton"] {
+        display: flex !important;
+        justify-content: flex-end !important; /* Ubica el botón a la derecha */
+        margin-top: 140px; /* Desplaza el botón al fondo del recuadro */
     }
-    .stButton>button:hover {
-        background-color: #fa5c68;
-        box-shadow: 0 0 18px rgba(255, 70, 85, 0.8);
-        color: white;
+
+    div[data-testid="stFormSubmitButton"] > button {
+        background-color: #ff4655 !important;
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        border: 2px solid #ff6b78 !important;
+        font-weight: 900 !important;
+        font-family: 'Arial Black', Arial, sans-serif !important;
+        font-size: 1.6rem !important; /* Tamaño de letra grande */
+        padding: 16px 45px !important; /* Tamaño del botón grande */
+        box-shadow: 0 0 20px rgba(255, 70, 85, 0.6) !important;
+        transition: all 0.3s ease-in-out !important;
+        width: auto !important;
+    }
+
+    div[data-testid="stFormSubmitButton"] > button:hover {
+        background-color: #fa5c68 !important;
+        box-shadow: 0 0 30px rgba(255, 70, 85, 1) !important;
+        transform: translateY(-2px);
+        color: white !important;
     }
 
     /* --- ESTILO GAMING PARA PESTAÑAS --- */
@@ -192,7 +203,7 @@ with tab_formulario:
     st.title("📝 Formulario de Postulación - Scarlet Esports")
     st.markdown("Selecciona la división y tu método de contacto preferido para completar tus datos.")
 
-    # --- CONTROLES INTERACTIVOS (FUERA DEL FORMULARIO PARA ACTUALIZACIÓN EN TIEMPO REAL) ---
+    # --- CONTROLES INTERACTIVOS ---
     col_sel1, col_sel2 = st.columns(2)
     with col_sel1:
         division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
@@ -209,20 +220,23 @@ with tab_formulario:
                 st.markdown(f"""
                 <div style="
                     background: rgba(22, 27, 34, 0.85);
-                    border: 1px solid rgba(255, 70, 85, 0.4);
-                    border-radius: 8px;
-                    padding: 12px;
+                    border: 2px solid rgba(255, 70, 85, 0.5);
+                    border-radius: 10px;
+                    padding: 20px 14px;
                     text-align: center;
-                    box-shadow: 0 0 10px rgba(255, 70, 85, 0.15);
+                    box-shadow: 0 0 15px rgba(255, 70, 85, 0.2);
                     margin-bottom: 20px;
                 ">
-                    <span style="color: #ff4655; font-size: 1.1rem; font-weight: bold; display: block; margin-bottom: 4px;">
+                    <span style="color: #ff4655; font-size: 1.6rem; font-weight: 900; display: block; margin-bottom: 8px;">
                         ⏰ {sub_nombre}
                     </span>
-                    <span style="color: #f0f2f6; font-size: 0.95rem; display: block; margin-bottom: 6px;">
-                        {info['horario']} <span style="color: #8b949e; font-size: 0.85rem;">(Hora Chile)</span>
+                    <span style="color: #ffffff; font-size: 2.1rem; font-weight: 900; display: block; margin-bottom: 4px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);">
+                        {info['horario']}
                     </span>
-                    <span style="color: #ff4655; font-size: 0.85rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
+                    <span style="color: #a3b1c2; font-size: 1.2rem; font-weight: bold; display: block; margin-bottom: 12px;">
+                        (Hora Chile)
+                    </span>
+                    <span style="color: #ff4655; font-size: 1.25rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
                         RANGO MÍNIMO: <span style="color: #ffffff;">{info['rango']}</span>
                     </span>
                 </div>
@@ -232,7 +246,6 @@ with tab_formulario:
         col_f1, col_f2 = st.columns(2)
         
         with col_f1:
-            # Texto dinámico según la opción seleccionada afuera
             if tipo_contacto == "Discord":
                 placeholder_txt = "Ej: usuario_discord o Scarlet#1234"
             elif tipo_contacto == "Instagram":
@@ -274,7 +287,6 @@ with tab_formulario:
             baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
             notas = st.text_input("Link de Tracker / VODs / Notas adicionales", autocomplete="off")
             
-            st.markdown("<br><br>", unsafe_allow_html=True) 
             submitted = st.form_submit_button("🚀 Enviar Postulación")
 
         if submitted:
