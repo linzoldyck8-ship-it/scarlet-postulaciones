@@ -15,7 +15,7 @@ def es_correo_valido(correo):
 HORARIOS_DIVISIONES = {
     "Valorant": {
         "División A": "20:00 - 23:00 (Lun a Vie)",
-        "Rango minimo: inmortal",
+        "Rango minimo": "inmortal",
         "División B": "18:00 - 21:00 (Lun a Vie)",
         "División C": "16:00 - 19:00 (Sáb y Dom)"
     },
