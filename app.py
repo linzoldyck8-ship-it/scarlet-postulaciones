@@ -6,6 +6,30 @@ import gspread
 from google.oauth2.service_account import Credentials
 import re  # Expresiones regulares para validar el correo electrónico
 
+# --- LISTAS DETALLADAS DE RANGOS POR JUEGO ---
+RANGOS_VALORANT = [
+    "Hierro 1", "Hierro 2", "Hierro 3",
+    "Bronce 1", "Bronce 2", "Bronce 3",
+    "Plata 1", "Plata 2", "Plata 3",
+    "Oro 1", "Oro 2", "Oro 3",
+    "Platino 1", "Platino 2", "Platino 3",
+    "Diamante 1", "Diamante 2", "Diamante 3",
+    "Ascendente 1", "Ascendente 2", "Ascendente 3",
+    "Inmortal 1", "Inmortal 2", "Inmortal 3",
+    "Radiante"
+]
+
+RANGOS_OVERWATCH = [
+    "Bronce 5", "Bronce 4", "Bronce 3", "Bronce 2", "Bronce 1",
+    "Plata 5", "Plata 4", "Plata 3", "Plata 2", "Plata 1",
+    "Oro 5", "Oro 4", "Oro 3", "Oro 2", "Oro 1",
+    "Platino 5", "Platino 4", "Platino 3", "Platino 2", "Platino 1",
+    "Diamante 5", "Diamante 4", "Diamante 3", "Diamante 2", "Diamante 1",
+    "Maestro 5", "Maestro 4", "Maestro 3", "Maestro 2", "Maestro 1",
+    "Gran Maestro 5", "Gran Maestro 4", "Gran Maestro 3", "Gran Maestro 2", "Gran Maestro 1",
+    "Campeón"
+]
+
 # --- FUNCIÓN DE VALIDACIÓN DE CORREO ELECTRÓNICO ---
 def es_correo_valido(correo):
     patron = r'^[\w\.-]+@[\w\.-]+\.\w+$'
@@ -265,19 +289,19 @@ with tab_formulario:
             if division in ["Valorant", "Valorant Femenino"]:
                 player_id = st.text_input("Riot ID (Ej: Scarlet#NA1)", autocomplete="off")
                 rol = st.selectbox("Rol", ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"])
-                rango_actual = st.selectbox("Rango Actual", ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"])
-                peak_elo = st.selectbox("Peak Elo", ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"])
+                rango_actual = st.selectbox("Rango Actual", RANGOS_VALORANT)
+                peak_elo = st.selectbox("Peak Elo", RANGOS_VALORANT)
             
             elif division == "Overwatch":
                 player_id = st.text_input("BattleTag (Ej: Scarlet#1234)", autocomplete="off")
                 rol = st.selectbox("Rol", ["Tanque", "DPS", "Support", "Flex"])
-                rango_actual = st.selectbox("Rango Actual", ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"])
-                peak_elo = st.selectbox("Peak Elo", ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"])
+                rango_actual = st.selectbox("Rango Actual", RANGOS_OVERWATCH)
+                peak_elo = st.selectbox("Peak Elo", RANGOS_OVERWATCH)
             
             elif division == "CS GO":
                 player_id = st.text_input("Steam ID o Link de Perfil", autocomplete="off")
                 rol = st.selectbox("Rol", ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Flex"])
-                rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k)", autocomplete="off")
+                rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k, FACEIT Lvl 10)", autocomplete="off")
                 peak_elo = st.text_input("Peak Elo / Max Rating", autocomplete="off")
                 
             elif division == "Fighting":
