@@ -101,7 +101,7 @@ st.markdown("""
         font-size: 1.3rem !important;
     }
 
-    /* --- ESTILO DEL BOTÓN DE ENVÍO DE FORMULARIO --- */
+    /* --- ESTILO Y TAMAÑO MAYOR PARA EL TEXTO DEL BOTÓN DE ENVÍO --- */
     div[data-testid="stFormSubmitButton"] button,
     button[kind="primaryFormSubmit"],
     button[data-testid="stBaseButton-primaryFormSubmit"] {
@@ -111,11 +111,17 @@ st.markdown("""
         border: 2px solid #ff6b78 !important;
         font-weight: 900 !important;
         font-family: 'Arial Black', Arial, sans-serif !important;
-        font-size: 1.5rem !important;
         padding: 16px 24px !important;
-        min-height: 60px !important;
+        min-height: 65px !important;
         box-shadow: 0 0 20px rgba(255, 70, 85, 0.6) !important;
         transition: all 0.3s ease-in-out !important;
+    }
+
+    div[data-testid="stFormSubmitButton"] button *,
+    button[kind="primaryFormSubmit"] *,
+    button[data-testid="stBaseButton-primaryFormSubmit"] * {
+        font-size: 1.9rem !important;
+        font-weight: 900 !important;
     }
 
     div[data-testid="stFormSubmitButton"] button:hover,
