@@ -464,7 +464,7 @@ with tab_formulario:
                                 nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
                             elif division == "Overwatch":
                                 nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
-                            elif division == "CS GO":
+                            elif division == "CS":
                                 nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
                             elif division == "Fighting":
                                 nueva_fila = [player_id, contacto_formateado, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas]
@@ -515,7 +515,7 @@ with tab_dashboard:
             st.session_state["autenticado"] = False
             st.rerun()
 
-        div_dashboard = st.sidebar.selectbox("📊 Analizar División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
+        div_dashboard = st.sidebar.selectbox("📊 Analizar División", ["Valorant", "Overwatch", "CS", "Valorant Femenino", "Fighting"])
         st.markdown(f"### Mostrando métricas de: **{div_dashboard}**")
 
         st.sidebar.markdown("## ⚙️ Panel de Control")
