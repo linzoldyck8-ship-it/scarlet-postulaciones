@@ -4,8 +4,14 @@ import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 import gspread
 from google.oauth2.service_account import Credentials
+import re  # Expresiones regulares para validar el correo electrónico
 
-# --- CONFIGURACIÓN DE HORARIOS POR DIVISIÓN Y SUBDIVISIÓN (FÁCILMENTE EDITABLE) ---
+# --- FUNCIÓN DE VALIDACIÓN DE CORREO ELECTRÓNICO ---
+def es_correo_valido(correo):
+    patron = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    return re.match(patron, correo) is not None
+
+# --- CONFIGURACIÓN DE HORARIOS POR DIVISIÓN Y SUBDIVISIÓN ---
 HORARIOS_DIVISIONES = {
     "Valorant": {
         "División A": "20:00 - 23:00 (Lun a Vie)",
@@ -218,7 +224,10 @@ with tab_formulario:
         col_f1, col_f2 = st.columns(2)
         
         with col_f1:
-            contacto_discord = st.text_input("Contacto Discord (Usuario)", autocomplete="off")
+            # --- SELECCIÓN Y VALIDACIÓN DE MÉTODO DE CONTACTO ---
+            tipo_contacto = st.selectbox("Método de Contacto Preferido", ["Discord", "Instagram", "Número Telefónico", "Correo Electrónico"])
+            contacto_valor = st.text_input(f"Ingresa tu {tipo_contacto}", autocomplete="off")
+            
             edad = st.number_input("Edad", min_value=10, max_value=80, value=18, step=1)
             
             if division in ["Valorant", "Valorant Femenino"]:
@@ -254,8 +263,12 @@ with tab_formulario:
             submitted = st.form_submit_button("🚀 Enviar Postulación")
 
         if submitted:
-            if not contacto_discord or not player_id:
-                st.error("⚠️ Por favor completa tu Contacto de Discord y tu ID de Jugador.")
+            contacto_formateado = f"{tipo_contacto}: {contacto_valor.strip()}"
+            
+            if not contacto_valor.strip() or not player_id.strip():
+                st.error("⚠️ Por favor completa tu Información de Contacto y tu ID de Jugador.")
+            elif tipo_contacto == "Correo Electrónico" and not es_correo_valido(contacto_valor.strip()):
+                st.error("⚠️ Por favor ingresa un correo electrónico válido (Ejemplo: usuario@dominio.com).")
             elif edad < 14:
                 st.error("⚠️ Debes tener al menos 14 años para postularte a Scarlet Esports.")
             elif not workbook:
@@ -268,21 +281,25 @@ with tab_formulario:
                     registros_existentes = ws.get_all_values()
                     duplicado = False
                     for fila in registros_existentes[1:]:
-                        if len(fila) > 1 and (fila[0].strip().lower() == player_id.strip().lower() or fila[1].strip().lower() == contacto_discord.strip().lower()):
+                        if len(fila) > 1 and (
+                            fila[0].strip().lower() == player_id.strip().lower() or 
+                            fila[1].strip().lower() == contacto_formateado.lower() or
+                            fila[1].strip().lower() == contacto_valor.strip().lower()
+                        ):
                             duplicado = True
                             break
                     
                     if duplicado:
-                        st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Usuario de Discord en esta división.")
+                        st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Contacto en esta división.")
                     else:
                         if division in ["Valorant", "Valorant Femenino"]:
-                            nueva_fila = [player_id, contacto_discord, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                            nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
                         elif division == "Overwatch":
-                            nueva_fila = [player_id, contacto_discord, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                            nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
                         elif division == "CS GO":
-                            nueva_fila = [player_id, contacto_discord, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                            nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
                         elif division == "Fighting":
-                            nueva_fila = [player_id, contacto_discord, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas]
+                            nueva_fila = [player_id, contacto_formateado, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas]
                         
                         ws.append_row(nueva_fila)
                         st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
@@ -337,8 +354,8 @@ with tab_dashboard:
                 df['Estado'] = 'Tryout'
                 col_estado = 'Estado'
 
-            col_discord = next((c for c in df.columns if 'discord' in c.lower()), df.columns[1])
-            total_postulantes = len(df[df[col_discord] != ''])
+            col_contacto = next((c for c in df.columns if 'contacto' in c.lower() or 'discord' in c.lower()), df.columns[1])
+            total_postulantes = len(df[df[col_contacto] != ''])
             tryouts_activos = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'tryout']) 
             aceptados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'aceptado']) 
 
