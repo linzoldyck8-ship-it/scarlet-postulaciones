@@ -26,11 +26,10 @@ RANGOS_OVERWATCH = [
     "Plata 5", "Plata 4", "Plata 3", "Plata 2", "Plata 1",
     "Oro 5", "Oro 4", "Oro 3", "Oro 2", "Oro 1",
     "Platino 5", "Platino 4", "Platino 3", "Platino 2", "Platino 1",
-    "Esmeralda 5","Esmeralda 4","Esmeralda 3","Esmeralda 2","Esmeralda 1",
     "Diamante 5", "Diamante 4", "Diamante 3", "Diamante 2", "Diamante 1",
     "Maestro 5", "Maestro 4", "Maestro 3", "Maestro 2", "Maestro 1",
     "Gran Maestro 5", "Gran Maestro 4", "Gran Maestro 3", "Gran Maestro 2", "Gran Maestro 1",
-    "TOP 500"
+    "Campeón"
 ]
 
 # DICCIONARIO PARA ETIQUETAR LOS IDS SEGÚN LA DIVISIÓN
@@ -51,7 +50,7 @@ def es_correo_valido(correo):
 HORARIOS_DIVISIONES = {
     "Valorant": {
         "División A": {"horario": "20:00 - 23:00 (Lun a Vie)", "rango": "Inmortal"},
-        "División B": {"horario": "21:00 - 23:00 (Lun a Vie)", "rango": "plata"},
+        "División B": {"horario": "18:00 - 21:00 (Lun a Vie)", "rango": "Ascendente"},
         "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "CS GO": {
@@ -60,8 +59,8 @@ HORARIOS_DIVISIONES = {
         "División C": {"horario": "17:00 - 20:00 (Fines de semana)", "rango": "Eagle / 10k+"}
     },
     "Overwatch": {
-        "División A": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "Gran Maestro"},
-        "División B": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "Platino"},
+        "División A": {"horario": "20:00 - 23:00 (Mar, Jue, Sáb)", "rango": "Gran Maestro"},
+        "División B": {"horario": "18:00 - 21:00 (Lun, Mié, Vie)", "rango": "Maestro"},
         "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "Valorant Femenino": {
@@ -546,27 +545,26 @@ with tab_dashboard:
 
         # --- SECCIÓN: CAMBIAR CONTRASEÑA ADMIN ---
         with st.sidebar.expander("🔑 Cambiar Contraseña Gerencial"):
-            pwd_actual = st.text_input("Contraseña Actual:", type="password", key="chg_pwd_curr")
-            pwd_nueva = st.text_input("Nueva Contraseña:", type="password", key="chg_pwd_new")
-            pwd_conf = st.text_input("Confirmar Nueva Contraseña:", type="password", key="chg_pwd_conf")
-            
-            if st.button("🔑 Guardar Nueva Contraseña"):
-                if pwd_actual != admin_password:
-                    st.sidebar.error("❌ La contraseña actual es incorrecta.")
-                elif not pwd_nueva.strip():
-                    st.sidebar.error("⚠️ La nueva contraseña no puede estar vacía.")
-                elif pwd_nueva != pwd_conf:
-                    st.sidebar.error("⚠️ Las nuevas contraseñas no coinciden.")
-                else:
-                    if actualizar_password_admin(pwd_nueva.strip()):
-                        st.sidebar.success("✅ ¡Contraseña actualizada exitosamente!")
-                        # Limpiar las casillas de texto en la interfaz
-                        st.session_state["chg_pwd_curr"] = ""
-                        st.session_state["chg_pwd_new"] = ""
-                        st.session_state["chg_pwd_conf"] = ""
-                        st.rerun()
+            with st.form("form_cambio_pass", clear_on_submit=True):
+                pwd_actual = st.text_input("Contraseña Actual:", type="password")
+                pwd_nueva = st.text_input("Nueva Contraseña:", type="password")
+                pwd_conf = st.text_input("Confirmar Nueva Contraseña:", type="password")
+                
+                btn_cambiar_pass = st.form_submit_button("🔑 Guardar Nueva Contraseña")
+                
+                if btn_cambiar_pass:
+                    if pwd_actual != admin_password:
+                        st.error("❌ La contraseña actual es incorrecta.")
+                    elif not pwd_nueva.strip():
+                        st.error("⚠️ La nueva contraseña no puede estar vacía.")
+                    elif pwd_nueva != pwd_conf:
+                        st.error("⚠️ Las nuevas contraseñas no coinciden.")
                     else:
-                        st.sidebar.error("❌ Error al guardar la nueva contraseña en Google Sheets.")
+                        if actualizar_password_admin(pwd_nueva.strip()):
+                            st.success("✅ ¡Contraseña actualizada exitosamente!")
+                            admin_password = pwd_nueva.strip() # Actualiza la memoria local
+                        else:
+                            st.error("❌ Error al guardar la nueva contraseña en Google Sheets.")
 
         # --- SECCIÓN: MOVER A LISTA NEGRA (VETAR) ---
         with st.sidebar.expander("🚫 Vetar / Mover a Lista Negra"):
