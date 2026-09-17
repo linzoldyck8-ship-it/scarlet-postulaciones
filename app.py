@@ -384,6 +384,30 @@ with tab_dashboard:
         if st.sidebar.button("🔄 Sincronizar Datos"):
             st.cache_data.clear()
             st.success("¡Sincronizado correctamente!")
+
+        st.sidebar.markdown("---")
+
+        # --- SECCIÓN DE LIMPIEZA DE BASE DE DATOS POR DIVISIÓN ---
+        with st.sidebar.expander("🚨 Zona de Peligro (Limpiar DB)"):
+            st.warning(f"⚠️ Estás a punto de BORRAR todos los postulantes de: **{div_dashboard}**")
+            st.caption("Esta acción no afectará a las otras divisiones y conservará los encabezados.")
+            
+            pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar:", type="password", key="confirm_pwd_wipe")
+            
+            if st.button(f"🗑️ Limpiar DB de {div_dashboard}", type="primary"):
+                if pwd_confirm == "cazuela":
+                    try:
+                        ws_clean = workbook.worksheet(div_dashboard)
+                        # Borra el contenido de la fila 2 en adelante para mantener las columnas intactas
+                        ws_clean.batch_clear(["A2:Z1000"])
+                        st.cache_data.clear()
+                        st.sidebar.success(f"✅ Base de datos de {div_dashboard} limpiada correctamente.")
+                        st.rerun()
+                    except Exception as e:
+                        st.sidebar.error(f"❌ Error al intentar borrar: {e}")
+                else:
+                    st.sidebar.error("❌ Contraseña incorrecta. Borrado cancelado.")
+
         st.sidebar.markdown("---")
 
         @st.cache_data(ttl=5)
