@@ -76,7 +76,7 @@ st.set_page_config(
 
 components.html("""
 <script>
-function bloquearPopups() {
+function bloquearPopupsYTooltips() {
     const doc = window.parent.document;
     
     if (!doc.getElementById('extension-blocker-style')) {
@@ -114,10 +114,21 @@ function bloquearPopups() {
         input.setAttribute('data-form-type', 'other');
         input.setAttribute('aria-autocomplete', 'none');
         input.setAttribute('spellcheck', 'false');
+        if (input.title) {
+            input.title = '';
+        }
+    });
+
+    // Ocultar cualquier tooltip flotante de Streamlit que mencione "Press Enter"
+    const tooltips = doc.querySelectorAll('div, span');
+    tooltips.forEach(el => {
+        if (el.innerText && el.innerText.includes('Press Enter to submit form')) {
+            el.style.display = 'none';
+        }
     });
 }
-setTimeout(bloquearPopups, 100);
-setInterval(bloquearPopups, 500);
+setTimeout(bloquearPopupsYTooltips, 100);
+setInterval(bloquearPopupsYTooltips, 300);
 </script>
 """, height=0)
 
@@ -142,19 +153,19 @@ st.markdown("""
     [data-testid="stMetric"] {
         background-color: rgba(22, 27, 34, 0.85);
         border: 1px solid rgba(255, 70, 85, 0.3);
-        padding: 15px;
+        padding: 12px;
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(255, 70, 85, 0.1);
     }
     [data-testid="stMetricLabel"] {
         color: #8b949e;
-        font-size: 1.2rem !important;
+        font-size: 1rem !important;
         font-weight: 600;
     }
     [data-testid="stMetricValue"] {
         color: #ff4655 !important;
         text-shadow: 0 0 8px rgba(255, 70, 85, 0.4);
-        font-size: 2.2rem !important;
+        font-size: 1.8rem !important;
     }
     h1, h2, h3 {
         font-family: 'Arial Black', Arial, sans-serif !important;
@@ -162,18 +173,19 @@ st.markdown("""
     }
     h1 {
         color: #ffffff;
-        text-shadow: 0 0 12px rgba(255, 70, 85, 0.5);
+        font-size: 1.8rem !important;
+        text-shadow: 0 0 10px rgba(255, 70, 85, 0.5);
     }
     div[data-testid="stForm"] label p, div[data-testid="stSelectbox"] label p {
-        font-size: 1.4rem !important;
+        font-size: 1.1rem !important;
         font-weight: bold;
     }
     div[data-testid="stForm"] div[data-baseweb="select"], 
     div[data-testid="stForm"] input {
-        font-size: 1.3rem !important;
+        font-size: 1rem !important;
     }
     ul[role="listbox"] li {
-        font-size: 1.3rem !important;
+        font-size: 1rem !important;
     }
 
     div[data-testid="stFormSubmitButton"] button,
@@ -185,16 +197,16 @@ st.markdown("""
         border: 2px solid #ff6b78 !important;
         font-weight: 900 !important;
         font-family: 'Arial Black', Arial, sans-serif !important;
-        padding: 16px 24px !important;
-        min-height: 65px !important;
-        box-shadow: 0 0 20px rgba(255, 70, 85, 0.6) !important;
+        padding: 12px 20px !important;
+        min-height: 50px !important;
+        box-shadow: 0 0 15px rgba(255, 70, 85, 0.6) !important;
         transition: all 0.3s ease-in-out !important;
     }
 
     div[data-testid="stFormSubmitButton"] button *,
     button[kind="primaryFormSubmit"] *,
     button[data-testid="stBaseButton-primaryFormSubmit"] * {
-        font-size: 1.9rem !important;
+        font-size: 1.3rem !important;
         font-weight: 900 !important;
     }
 
@@ -202,15 +214,15 @@ st.markdown("""
     button[kind="primaryFormSubmit"]:hover,
     button[data-testid="stBaseButton-primaryFormSubmit"]:hover {
         background-color: #fa5c68 !important;
-        box-shadow: 0 0 35px rgba(255, 70, 85, 1) !important;
+        box-shadow: 0 0 25px rgba(255, 70, 85, 1) !important;
         transform: scale(1.02);
         color: white !important;
     }
 
     [role="tablist"] {
         background-color: rgba(18, 22, 31, 0.6) !important;
-        gap: 10px !important;
-        padding: 8px 12px !important;
+        gap: 8px !important;
+        padding: 6px 10px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(255, 70, 85, 0.2) !important;
     }
@@ -218,13 +230,13 @@ st.markdown("""
     [role="tab"] {
         background-color: transparent !important;
         border-radius: 6px !important;
-        padding: 8px 20px !important;
+        padding: 6px 16px !important;
         border: 1px solid transparent !important;
         transition: all 0.3s ease-in-out !important;
     }
 
     [role="tab"] p, [role="tab"] div {
-        font-size: 1.15rem !important;
+        font-size: 1rem !important;
         font-weight: bold !important;
         color: #8b949e !important;
     }
@@ -240,11 +252,11 @@ st.markdown("""
     [role="tab"][aria-selected="true"] {
         background: linear-gradient(135deg, rgba(255, 70, 85, 0.4) 0%, rgba(255, 70, 85, 0.8) 100%) !important;
         border-color: #ff4655 !important;
-        box-shadow: 0 0 15px rgba(255, 70, 85, 0.5) !important;
+        box-shadow: 0 0 12px rgba(255, 70, 85, 0.5) !important;
     }
     [role="tab"][aria-selected="true"] p, [role="tab"][aria-selected="true"] div {
         color: #ffffff !important;
-        text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+        text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
     }
 
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] {
@@ -333,21 +345,21 @@ with tab_formulario:
                     background: rgba(22, 27, 34, 0.85);
                     border: 2px solid rgba(255, 70, 85, 0.5);
                     border-radius: 10px;
-                    padding: 14px 10px;
+                    padding: 12px 8px;
                     text-align: center;
                     box-shadow: 0 0 15px rgba(255, 70, 85, 0.2);
                     margin-bottom: 20px;
                 ">
-                    <span style="color: #ff4655; font-size: 1.35rem; font-weight: 900; display: block; margin-bottom: 6px;">
+                    <span style="color: #ff4655; font-size: 1.1rem; font-weight: 900; display: block; margin-bottom: 4px;">
                         ⏰ {sub_nombre}
                     </span>
-                    <span style="color: #ffffff; font-size: 1.65rem; font-weight: 900; display: block; margin-bottom: 4px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);">
+                    <span style="color: #ffffff; font-size: 1.3rem; font-weight: 900; display: block; margin-bottom: 3px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);">
                         {info['horario']}
                     </span>
-                    <span style="color: #a3b1c2; font-size: 1.05rem; font-weight: bold; display: block; margin-bottom: 10px;">
+                    <span style="color: #a3b1c2; font-size: 0.9rem; font-weight: bold; display: block; margin-bottom: 8px;">
                         (Hora Chile)
                     </span>
-                    <span style="color: #ff4655; font-size: 1.15rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
+                    <span style="color: #ff4655; font-size: 1rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
                         RANGO MÍNIMO: <span style="color: #ffffff;">{info['rango']}</span>
                     </span>
                 </div>
@@ -398,7 +410,7 @@ with tab_formulario:
             baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
             notas = st.text_input("Link de Tracker / VODs / Notas adicionales")
 
-        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
         col_espacio, col_boton = st.columns([1, 1])
         with col_boton:
             submitted = st.form_submit_button("🚀 Enviar Postulación", use_container_width=True)
