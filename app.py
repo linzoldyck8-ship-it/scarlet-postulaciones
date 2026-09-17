@@ -85,53 +85,56 @@ st.markdown("""
         color: white;
     }
 
-    /* --- ESTILO NAVBAR / PESTAÑAS GAMING --- */
+    /* --- SELECTORES FORZADOS PARA PESTAÑAS TIPO GAMING --- */
+    
     /* Contenedor general de las pestañas */
     div[data-baseweb="tab-list"] {
-        background-color: transparent !important;
-        gap: 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 5px;
-    }
-    
-    /* Botón / Pestaña individual */
-    div[data-baseweb="tab"] {
-        background-color: transparent !important;
-        border-radius: 6px 6px 0 0 !important;
-        padding: 10px 20px !important;
-        transition: background 0.3s ease;
+        background-color: rgba(18, 22, 31, 0.4) !important;
+        gap: 8px !important;
+        padding: 8px 10px !important;
+        border-radius: 8px !important;
+        border-bottom: 2px solid rgba(255, 70, 85, 0.3) !important;
     }
 
-    /* Texto de las pestañas */
-    div[data-baseweb="tab"] p {
+    /* Cada pestaña individual */
+    div[data-baseweb="tab"] {
+        background-color: transparent !important;
+        border-radius: 6px !important;
+        padding: 8px 20px !important;
+        border: 1px solid transparent !important;
+        transition: all 0.3s ease-in-out !important;
+    }
+
+    /* Textos internos de las pestañas */
+    div[data-baseweb="tab"] div, div[data-baseweb="tab"] p {
         font-size: 1.15rem !important;
         font-weight: bold !important;
         color: #8b949e !important;
-        transition: color 0.3s ease;
     }
 
     /* Efecto Hover con Gradiente Escarlata */
     div[data-baseweb="tab"]:hover {
-        background: linear-gradient(180deg, rgba(255, 70, 85, 0.05) 0%, rgba(255, 70, 85, 0.25) 100%) !important;
+        background: linear-gradient(135deg, rgba(255, 70, 85, 0.2) 0%, rgba(255, 70, 85, 0.4) 100%) !important;
+        border-color: rgba(255, 70, 85, 0.5) !important;
     }
-    div[data-baseweb="tab"]:hover p {
+    div[data-baseweb="tab"]:hover div, div[data-baseweb="tab"]:hover p {
         color: #ffffff !important;
     }
 
-    /* Pestaña Activa / Seleccionada con Gradiente y Línea Roja */
+    /* Pestaña Seleccionada con Gradiente Escarlata Activo */
     div[data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(180deg, rgba(255, 70, 85, 0.1) 0%, rgba(255, 70, 85, 0.35) 100%) !important;
+        background: linear-gradient(135deg, rgba(255, 70, 85, 0.4) 0%, rgba(255, 70, 85, 0.75) 100%) !important;
+        border-color: #ff4655 !important;
+        box-shadow: 0 0 15px rgba(255, 70, 85, 0.5) !important;
     }
-    div[data-baseweb="tab"][aria-selected="true"] p {
+    div[data-baseweb="tab"][aria-selected="true"] div, div[data-baseweb="tab"][aria-selected="true"] p {
         color: #ffffff !important;
-        text-shadow: 0 0 8px rgba(255, 70, 85, 0.6);
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
     }
 
-    /* Línea indicadora inferior de Streamlit personalizada */
+    /* Ocultar barra inferior genérica de Streamlit para que parezcan botones flotantes puros */
     div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {
-        background-color: #ff4655 !important;
-        height: 3px !important;
-        box-shadow: 0 0 10px #ff4655;
+        display: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
