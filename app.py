@@ -708,7 +708,6 @@ with tab_dashboard:
                 aceptados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'aceptado']) 
                 rechazados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'rechazado'])
                 
-                # --- NUEVA LÓGICA DE LISTA NEGRA POR DIVISIÓN ---
                 df_bl_metric = load_data_from_sheet("Lista Negra")
                 if not df_bl_metric.empty and len(df_bl_metric.columns) >= 5:
                     col_div_orig = df_bl_metric.columns[4]
@@ -716,7 +715,6 @@ with tab_dashboard:
                 else:
                     en_lista_negra = 0
 
-                # --- FILA 1 DE MÉTRICAS ---
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Postulantes Totales", total_postulantes)
                 col2.metric("Pruebas Activas", tryouts_activos, delta="En proceso")
@@ -724,7 +722,6 @@ with tab_dashboard:
                 
                 st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
                 
-                # --- FILA 2 DE MÉTRICAS (Con tercera columna vacía para alinear) ---
                 col4, col5, _ = st.columns(3)
                 with col4:
                     st.metric("Postulantes Rechazados", rechazados)
@@ -775,43 +772,58 @@ with tab_dashboard:
 
         with subtab_estado:
             st.subheader(f"📝 Modificar Estado en {div_dashboard}")
+            st.markdown("Busca y edita el estado de los postulantes directamente en la tabla interactiva y haz clic en **Guardar Cambios**.")
             
             if not df.empty:
                 col_estado_mod = next((c for c in df.columns if 'estado' in c.lower()), None)
                 if not col_estado_mod:
-                    col_estado_mod = df.columns[-2]
+                    df['Estado'] = 'Tryout'
+                    col_estado_mod = 'Estado'
                 
-                col_id_name_mod = df.columns[0]
+                df[col_estado_mod] = df[col_estado_mod].astype(str).str.capitalize()
                 
-                opciones_estado = {}
-                for idx, row in df.iterrows():
-                    val_id = row[col_id_name_mod]
-                    estado_actual = str(row[col_estado_mod]).strip() if pd.notna(row[col_estado_mod]) else "Desconocido"
-                    etiqueta = f"🎮 {val_id} | Estado: {estado_actual}"
-                    opciones_estado[etiqueta] = (idx + 2, estado_actual)
+                column_config_dict = {
+                    col_estado_mod: st.column_config.SelectboxColumn(
+                        "Estado",
+                        help="Selecciona el nuevo estado del postulante",
+                        options=["Tryout", "Aceptado", "Rechazado"],
+                        required=True,
+                    )
+                }
                 
-                postulante_sel_estado = st.selectbox("Selecciona al postulante", list(opciones_estado.keys()), key="sb_modificar_estado_tab")
+                disabled_cols = [c for c in df.columns if c != col_estado_mod]
                 
-                estado_previo = opciones_estado[postulante_sel_estado][1]
-                # --- AQUÍ SE ELIMINÓ "Vetado" ---
-                lista_estados = ["Tryout", "Aceptado", "Rechazado"]
+                edited_df = st.data_editor(
+                    df,
+                    column_config=column_config_dict,
+                    disabled=disabled_cols,
+                    key=f"data_editor_{div_dashboard}",
+                    use_container_width=True,
+                    hide_index=True
+                )
                 
-                index_defecto = lista_estados.index(estado_previo.capitalize()) if estado_previo.capitalize() in lista_estados else 0
-                nuevo_estado = st.selectbox("Nuevo Estado", lista_estados, index=index_defecto)
-                
-                if st.button("💾 Guardar Nuevo Estado", use_container_width=True):
+                if st.button("💾 Guardar Cambios de Estado", use_container_width=True):
                     try:
-                        fila_a_modificar = opciones_estado[postulante_sel_estado][0]
+                        ws_estado = workbook.worksheet(div_dashboard)
                         col_idx = df.columns.tolist().index(col_estado_mod) + 1
                         
-                        ws_estado = workbook.worksheet(div_dashboard)
-                        ws_estado.update_cell(fila_a_modificar, col_idx, nuevo_estado)
+                        cambios_realizados = 0
+                        for idx in range(len(df)):
+                            val_original = str(df.iloc[idx][col_estado_mod]).strip()
+                            val_nuevo = str(edited_df.iloc[idx][col_estado_mod]).strip()
+                            
+                            if val_original != val_nuevo:
+                                fila_excel = idx + 2
+                                ws_estado.update_cell(fila_excel, col_idx, val_nuevo)
+                                cambios_realizados += 1
                         
                         st.cache_data.clear()
-                        
-                        st.success(f"✅ Estado actualizado a '{nuevo_estado}' con éxito.")
-                        st.rerun()
+                        if cambios_realizados > 0:
+                            st.success(f"✅ Se actualizaron {cambios_realizados} estados correctamente en Google Sheets.")
+                            st.rerun()
+                        else:
+                            st.info("ℹ️ No se detectaron cambios en los estados.")
                     except Exception as e:
-                        st.error(f"❌ Error al actualizar el estado: {e}")
+                        st.error(f"❌ Error al guardar los cambios: {e}")
             else:
                 st.info("No hay postulantes registrados en esta división.")
