@@ -38,7 +38,7 @@ ETIQUETAS_ID = {
     "Valorant": "Riot ID",
     "Valorant Femenino": "Riot ID",
     "Overwatch": "BattleTag",
-    "CS GO": "Steam ID",
+    "CS": "Steam ID",
     "Fighting": "ID Jugador"
 }
 
@@ -54,7 +54,7 @@ HORARIOS_DIVISIONES = {
         "División B": {"horario": "21:00 - 23:00 (Lun a Vie)", "rango": "plata"},
         "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
-    "CS GO": {
+    "CS": {
         "División A": {"horario": "22:00 - 01:00 (Lun a Vie)", "rango": "Nivel 5 Faceit/ 10 GC"},
     },
     "Overwatch": {
