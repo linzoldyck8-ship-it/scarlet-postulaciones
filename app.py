@@ -392,7 +392,7 @@ with tab_formulario:
                 rango_actual = st.selectbox("Rango Actual", RANGOS_OVERWATCH)
                 peak_elo = st.selectbox("Peak Elo", RANGOS_OVERWATCH)
             
-            elif division == "CS GO":
+            elif division == "CS":
                 player_id = st.text_input("Steam ID o Link de Perfil")
                 rol = st.selectbox("Rol", ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Rifler"])
                 rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k, FACEIT Lvl 10)")
