@@ -220,21 +220,21 @@ with tab_formulario:
                     background: rgba(22, 27, 34, 0.85);
                     border: 2px solid rgba(255, 70, 85, 0.5);
                     border-radius: 10px;
-                    padding: 20px 14px;
+                    padding: 14px 10px;
                     text-align: center;
                     box-shadow: 0 0 15px rgba(255, 70, 85, 0.2);
                     margin-bottom: 20px;
                 ">
-                    <span style="color: #ff4655; font-size: 1.6rem; font-weight: 900; display: block; margin-bottom: 8px;">
+                    <span style="color: #ff4655; font-size: 1.35rem; font-weight: 900; display: block; margin-bottom: 6px;">
                         ⏰ {sub_nombre}
                     </span>
-                    <span style="color: #ffffff; font-size: 2.1rem; font-weight: 900; display: block; margin-bottom: 4px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);">
+                    <span style="color: #ffffff; font-size: 1.65rem; font-weight: 900; display: block; margin-bottom: 4px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);">
                         {info['horario']}
                     </span>
-                    <span style="color: #a3b1c2; font-size: 1.2rem; font-weight: bold; display: block; margin-bottom: 12px;">
+                    <span style="color: #a3b1c2; font-size: 1.05rem; font-weight: bold; display: block; margin-bottom: 10px;">
                         (Hora Chile)
                     </span>
-                    <span style="color: #ff4655; font-size: 1.25rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
+                    <span style="color: #ff4655; font-size: 1.15rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
                         RANGO MÍNIMO: <span style="color: #ffffff;">{info['rango']}</span>
                     </span>
                 </div>
