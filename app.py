@@ -703,18 +703,18 @@ with tab_dashboard:
 
                 col_contacto = next((c for c in df.columns if 'contacto' in c.lower() or 'discord' in c.lower()), df.columns[1])
                 
-                # --- NUEVOS CÁLCULOS DE MÉTRICAS ---
                 total_postulantes = len(df[df[col_contacto] != ''])
                 tryouts_activos = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'tryout']) 
                 aceptados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'aceptado']) 
                 rechazados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'rechazado'])
                 
-                # Extraer la cuenta de la hoja global de Lista Negra
+                # --- NUEVA LÓGICA DE LISTA NEGRA POR DIVISIÓN ---
                 df_bl_metric = load_data_from_sheet("Lista Negra")
-                en_lista_negra = len(df_bl_metric) if not df_bl_metric.empty else 0
-
-                col_baneos = next((c for c in df.columns if 'bano' in c.lower() or 'baneo' in c.lower() or 'historial' in c.lower()), None)
-                baneos_alerta = len(df[df[col_baneos].astype(str).str.strip().isin(['Chat Ban', 'Ranked Ban', 'Permanente/HWID'])]) if col_baneos else 0
+                if not df_bl_metric.empty and len(df_bl_metric.columns) >= 5:
+                    col_div_orig = df_bl_metric.columns[4]
+                    en_lista_negra = len(df_bl_metric[df_bl_metric[col_div_orig].astype(str).str.strip() == div_dashboard])
+                else:
+                    en_lista_negra = 0
 
                 # --- FILA 1 DE MÉTRICAS ---
                 col1, col2, col3 = st.columns(3)
@@ -724,11 +724,12 @@ with tab_dashboard:
                 
                 st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
                 
-                # --- FILA 2 DE MÉTRICAS ---
-                col4, col5, col6 = st.columns(3)
-                col4.metric("Postulantes Rechazados", rechazados)
-                col5.metric("En Lista Negra (Total)", en_lista_negra)
-                col6.metric("Alertas de Baneos", baneos_alerta, delta_color="inverse" if baneos_alerta > 0 else "normal")
+                # --- FILA 2 DE MÉTRICAS (Con tercera columna vacía para alinear) ---
+                col4, col5, _ = st.columns(3)
+                with col4:
+                    st.metric("Postulantes Rechazados", rechazados)
+                with col5:
+                    st.metric(f"En Lista Negra", en_lista_negra)
 
                 st.markdown("---")
 
@@ -792,7 +793,8 @@ with tab_dashboard:
                 postulante_sel_estado = st.selectbox("Selecciona al postulante", list(opciones_estado.keys()), key="sb_modificar_estado_tab")
                 
                 estado_previo = opciones_estado[postulante_sel_estado][1]
-                lista_estados = ["Tryout", "Aceptado", "Rechazado", "Vetado"]
+                # --- AQUÍ SE ELIMINÓ "Vetado" ---
+                lista_estados = ["Tryout", "Aceptado", "Rechazado"]
                 
                 index_defecto = lista_estados.index(estado_previo.capitalize()) if estado_previo.capitalize() in lista_estados else 0
                 nuevo_estado = st.selectbox("Nuevo Estado", lista_estados, index=index_defecto)
