@@ -329,7 +329,7 @@ with tab_formulario:
 
     col_sel1, col_sel2 = st.columns(2)
     with col_sel1:
-        division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
+        division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS", "Valorant Femenino", "Fighting"])
     with col_sel2:
         tipo_contacto = st.selectbox("📞 Método de Contacto Preferido", ["Discord", "Instagram", "Número Telefónico", "Correo Electrónico"])
 
