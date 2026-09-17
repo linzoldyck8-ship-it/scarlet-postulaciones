@@ -432,6 +432,8 @@ with tab_dashboard:
         st.session_state["wipe_count"] = 0
     if "bl_count" not in st.session_state:
         st.session_state["bl_count"] = 0
+    if "unbl_count" not in st.session_state:
+        st.session_state["unbl_count"] = 0
 
     if not st.session_state["autenticado"]:
         st.subheader("🔒 Acceso Restringido")
@@ -528,6 +530,42 @@ with tab_dashboard:
                         st.sidebar.error("❌ Contraseña incorrecta.")
             else:
                 st.info("No hay postulantes registrados en esta división.")
+
+        # --- SECCIÓN: DESVETAR (QUITAR DE LISTA NEGRA) ---
+        with st.sidebar.expander("🟢 Desvetar / Quitar de Lista Negra"):
+            df_bl_data = load_data_from_sheet("Lista Negra")
+            if not df_bl_data.empty:
+                opciones_desvetar = {}
+                for idx, row in df_bl_data.iterrows():
+                    val_id = row[df_bl_data.columns[0]]
+                    val_contacto = row[df_bl_data.columns[1]] if len(df_bl_data.columns) > 1 else ""
+                    div_orig = row[df_bl_data.columns[4]] if len(df_bl_data.columns) > 4 else "Desconocida"
+                    etiqueta = f"🎮 {val_id} ({val_contacto}) - [{div_orig}]"
+                    opciones_desvetar[etiqueta] = idx + 2  # Fila en la hoja (+2 por encabezado)
+                
+                player_to_unvet = st.selectbox("Selecciona jugador a desvetar", list(opciones_desvetar.keys()), key="sb_desvetar")
+                
+                key_unbl = f"pwd_unbl_{st.session_state['unbl_count']}"
+                pwd_unbl = st.text_input("Confirma contraseña gerencial para desvetar:", type="password", key=key_unbl)
+                
+                if st.button("🟢 Desvetar y Permitir Postulaciones"):
+                    if pwd_unbl == "cazuela":
+                        try:
+                            fila_a_borrar_bl = opciones_desvetar[player_to_unvet]
+                            ws_bl_del = obtener_hoja_lista_negra(workbook)
+                            ws_bl_del.delete_rows(fila_a_borrar_bl)
+                            
+                            st.cache_data.clear()
+                            st.session_state["unbl_count"] += 1
+                            
+                            st.sidebar.success("✅ Jugador retirado de la Lista Negra con éxito. Ahora puede volver a postularse.")
+                            st.rerun()
+                        except Exception as e:
+                            st.sidebar.error(f"❌ Error al desvetar jugador: {e}")
+                    else:
+                        st.sidebar.error("❌ Contraseña incorrecta.")
+            else:
+                st.info("No hay jugadores actualmente en la Lista Negra.")
 
         # --- SECCIÓN: BORRAR ESPECÍFICO (SIN VETAR) ---
         with st.sidebar.expander("👤 Borrar Postulante (Sin Vetar)"):
