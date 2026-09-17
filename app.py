@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- ESTILOS CSS AVANZADOS (BARRA DE PESTAÑAS ESTILO GAMING) ---
+# --- ESTILOS CSS AVANZADOS (PESTAÑAS ESTILO GAMING CON ROLES ARIA) ---
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -85,19 +85,19 @@ st.markdown("""
         color: white;
     }
 
-    /* --- SELECTORES FORZADOS PARA PESTAÑAS TIPO GAMING --- */
+    /* --- ESTILO GAMING PARA PESTAÑAS (BASADO EN ROLES ARIA) --- */
     
-    /* Contenedor general de las pestañas */
-    div[data-baseweb="tab-list"] {
-        background-color: rgba(18, 22, 31, 0.4) !important;
-        gap: 8px !important;
-        padding: 8px 10px !important;
+    /* Contenedor de la barra de pestañas */
+    [role="tablist"] {
+        background-color: rgba(18, 22, 31, 0.6) !important;
+        gap: 10px !important;
+        padding: 8px 12px !important;
         border-radius: 8px !important;
-        border-bottom: 2px solid rgba(255, 70, 85, 0.3) !important;
+        border: 1px solid rgba(255, 70, 85, 0.2) !important;
     }
 
-    /* Cada pestaña individual */
-    div[data-baseweb="tab"] {
+    /* Pestaña individual */
+    [role="tab"] {
         background-color: transparent !important;
         border-radius: 6px !important;
         padding: 8px 20px !important;
@@ -105,35 +105,35 @@ st.markdown("""
         transition: all 0.3s ease-in-out !important;
     }
 
-    /* Textos internos de las pestañas */
-    div[data-baseweb="tab"] div, div[data-baseweb="tab"] p {
+    /* Texto de las pestañas */
+    [role="tab"] p, [role="tab"] div {
         font-size: 1.15rem !important;
         font-weight: bold !important;
         color: #8b949e !important;
     }
 
     /* Efecto Hover con Gradiente Escarlata */
-    div[data-baseweb="tab"]:hover {
-        background: linear-gradient(135deg, rgba(255, 70, 85, 0.2) 0%, rgba(255, 70, 85, 0.4) 100%) !important;
+    [role="tab"]:hover {
+        background: linear-gradient(135deg, rgba(255, 70, 85, 0.2) 0%, rgba(255, 70, 85, 0.45) 100%) !important;
         border-color: rgba(255, 70, 85, 0.5) !important;
     }
-    div[data-baseweb="tab"]:hover div, div[data-baseweb="tab"]:hover p {
+    [role="tab"]:hover p, [role="tab"]:hover div {
         color: #ffffff !important;
     }
 
-    /* Pestaña Seleccionada con Gradiente Escarlata Activo */
-    div[data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, rgba(255, 70, 85, 0.4) 0%, rgba(255, 70, 85, 0.75) 100%) !important;
+    /* Pestaña Activa / Seleccionada con Gradiente Escarlata Fuerte */
+    [role="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, rgba(255, 70, 85, 0.4) 0%, rgba(255, 70, 85, 0.8) 100%) !important;
         border-color: #ff4655 !important;
         box-shadow: 0 0 15px rgba(255, 70, 85, 0.5) !important;
     }
-    div[data-baseweb="tab"][aria-selected="true"] div, div[data-baseweb="tab"][aria-selected="true"] p {
+    [role="tab"][aria-selected="true"] p, [role="tab"][aria-selected="true"] div {
         color: #ffffff !important;
         text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
     }
 
-    /* Ocultar barra inferior genérica de Streamlit para que parezcan botones flotantes puros */
-    div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {
+    /* Ocultar la línea inferior por defecto de Streamlit */
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {
         display: none !important;
     }
     </style>
