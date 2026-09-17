@@ -55,9 +55,7 @@ HORARIOS_DIVISIONES = {
         "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "CS GO": {
-        "División A": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "Global / 20k+"},
-        "División B": {"horario": "19:00 - 22:00 (Mar a Sáb)", "rango": "Supreme / 15k+"},
-        "División C": {"horario": "17:00 - 20:00 (Fines de semana)", "rango": "Eagle / 10k+"}
+        "División A": {"horario": "22:00 - 01:00 (Lun a Vie)", "rango": "Nivel 5 Faceit/ 10 GC"},
     },
     "Overwatch": {
         "División A": {"horario": "20:00 - 23:00 (Mar, Jue, Sáb)", "rango": "Gran Maestro"},
