@@ -702,18 +702,33 @@ with tab_dashboard:
                     col_estado = 'Estado'
 
                 col_contacto = next((c for c in df.columns if 'contacto' in c.lower() or 'discord' in c.lower()), df.columns[1])
+                
+                # --- NUEVOS CÁLCULOS DE MÉTRICAS ---
                 total_postulantes = len(df[df[col_contacto] != ''])
                 tryouts_activos = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'tryout']) 
                 aceptados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'aceptado']) 
+                rechazados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'rechazado'])
+                
+                # Extraer la cuenta de la hoja global de Lista Negra
+                df_bl_metric = load_data_from_sheet("Lista Negra")
+                en_lista_negra = len(df_bl_metric) if not df_bl_metric.empty else 0
 
                 col_baneos = next((c for c in df.columns if 'bano' in c.lower() or 'baneo' in c.lower() or 'historial' in c.lower()), None)
                 baneos_alerta = len(df[df[col_baneos].astype(str).str.strip().isin(['Chat Ban', 'Ranked Ban', 'Permanente/HWID'])]) if col_baneos else 0
 
-                col1, col2, col3, col4 = st.columns(4)
+                # --- FILA 1 DE MÉTRICAS ---
+                col1, col2, col3 = st.columns(3)
                 col1.metric("Postulantes Totales", total_postulantes)
                 col2.metric("Pruebas Activas", tryouts_activos, delta="En proceso")
                 col3.metric("Plantel Aceptado", aceptados)
-                col4.metric("Alertas de Baneos", baneos_alerta, delta_color="inverse" if baneos_alerta > 0 else "normal")
+                
+                st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+                
+                # --- FILA 2 DE MÉTRICAS ---
+                col4, col5, col6 = st.columns(3)
+                col4.metric("Postulantes Rechazados", rechazados)
+                col5.metric("En Lista Negra (Total)", en_lista_negra)
+                col6.metric("Alertas de Baneos", baneos_alerta, delta_color="inverse" if baneos_alerta > 0 else "normal")
 
                 st.markdown("---")
 
