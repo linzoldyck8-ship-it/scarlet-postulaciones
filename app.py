@@ -101,31 +101,29 @@ st.markdown("""
         font-size: 1.3rem !important;
     }
 
-    /* --- ESTILO Y POSICIONAMIENTO DEL BOTÓN ENVIAR POSTULACIÓN --- */
-    div[data-testid="stFormSubmitButton"] {
-        display: flex !important;
-        justify-content: flex-end !important; /* Ubica el botón a la derecha */
-        margin-top: 140px; /* Desplaza el botón al fondo del recuadro */
-    }
-
-    div[data-testid="stFormSubmitButton"] > button {
+    /* --- ESTILO DEL BOTÓN DE ENVÍO DE FORMULARIO --- */
+    div[data-testid="stFormSubmitButton"] button,
+    button[kind="primaryFormSubmit"],
+    button[data-testid="stBaseButton-primaryFormSubmit"] {
         background-color: #ff4655 !important;
         color: #ffffff !important;
         border-radius: 8px !important;
         border: 2px solid #ff6b78 !important;
         font-weight: 900 !important;
         font-family: 'Arial Black', Arial, sans-serif !important;
-        font-size: 1.6rem !important; /* Tamaño de letra grande */
-        padding: 16px 45px !important; /* Tamaño del botón grande */
+        font-size: 1.5rem !important;
+        padding: 16px 24px !important;
+        min-height: 60px !important;
         box-shadow: 0 0 20px rgba(255, 70, 85, 0.6) !important;
         transition: all 0.3s ease-in-out !important;
-        width: auto !important;
     }
 
-    div[data-testid="stFormSubmitButton"] > button:hover {
+    div[data-testid="stFormSubmitButton"] button:hover,
+    button[kind="primaryFormSubmit"]:hover,
+    button[data-testid="stBaseButton-primaryFormSubmit"]:hover {
         background-color: #fa5c68 !important;
-        box-shadow: 0 0 30px rgba(255, 70, 85, 1) !important;
-        transform: translateY(-2px);
+        box-shadow: 0 0 35px rgba(255, 70, 85, 1) !important;
+        transform: scale(1.02);
         color: white !important;
     }
 
@@ -286,8 +284,12 @@ with tab_formulario:
         with col_f2:
             baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
             notas = st.text_input("Link de Tracker / VODs / Notas adicionales", autocomplete="off")
-            
-            submitted = st.form_submit_button("🚀 Enviar Postulación")
+
+        # --- FILA INFERIOR: BOTÓN EN EL EXTREMO INFERIOR DERECHO ---
+        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+        col_espacio, col_boton = st.columns([1, 1])
+        with col_boton:
+            submitted = st.form_submit_button("🚀 Enviar Postulación", use_container_width=True)
 
         if submitted:
             contacto_formateado = f"{tipo_contacto}: {contacto_valor.strip()}"
