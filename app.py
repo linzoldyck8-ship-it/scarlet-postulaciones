@@ -5,8 +5,8 @@ import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 import gspread
 from google.oauth2.service_account import Credentials
-import re  # Expresiones regulares para validar el correo electrónico
-import datetime  # Para registrar fechas de veto
+import re
+import datetime
 
 # --- LISTAS DETALLADAS DE RANGOS POR JUEGO ---
 RANGOS_VALORANT = [
@@ -33,7 +33,6 @@ RANGOS_OVERWATCH = [
     "TOP 500"
 ]
 
-# DICCIONARIO PARA ETIQUETAR LOS IDS SEGÚN LA DIVISIÓN
 ETIQUETAS_ID = {
     "Valorant": "Riot ID",
     "Valorant Femenino": "Riot ID",
@@ -42,12 +41,10 @@ ETIQUETAS_ID = {
     "Fighting": "ID Jugador"
 }
 
-# --- FUNCIÓN DE VALIDACIÓN DE CORREO ELECTRÓNICO ---
 def es_correo_valido(correo):
     patron = r'^[\w\.-]+@[\w\.-]+\.\w+$'
     return re.match(patron, correo) is not None
 
-# --- CONFIGURACIÓN DE HORARIOS Y RANGOS POR DIVISIÓN Y SUBDIVISIÓN ---
 HORARIOS_DIVISIONES = {
     "Valorant": {
         "División A": {"horario": "20:00 - 23:00 (Lun a Vie)", "rango": "Inmortal"},
@@ -71,14 +68,12 @@ HORARIOS_DIVISIONES = {
     }
 }
 
-# Configuración de la página
 st.set_page_config(
     page_title="Scarlet Esports - Reclutamiento",
     page_icon="https://raw.githubusercontent.com/linzoldyck8-ship-it/valo-lino-/main/SCARLET.png",
     layout="wide"
 )
 
-# --- SCRIPT JS Y CSS AGRESIVO PARA BLOQUEAR EXTENSIONES Y OVERLAYS ---
 components.html("""
 <script>
 function bloquearPopups() {
@@ -126,7 +121,6 @@ setInterval(bloquearPopups, 500);
 </script>
 """, height=0)
 
-# --- ESTILOS CSS AVANZADOS ---
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -259,7 +253,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Configuración de Google Sheets API
 SHEET_ID = "1a-D3wfr9XBwFIE34wAY-9-16eB3ABHndPsxq_6dbWqE"
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
@@ -279,7 +272,6 @@ def conectar_gsheets():
 
 workbook = conectar_gsheets()
 
-# --- FUNCIÓN PARA OBTENER Y ACTUALIZAR LA CONTRASEÑA ADMIN ---
 @st.cache_data(ttl=10)
 def obtener_password_admin():
     if not workbook:
@@ -308,7 +300,6 @@ def actualizar_password_admin(nueva_clave):
     except Exception:
         return False
 
-# --- FUNCIÓN AUXILIAR PARA OBTENER O CREAR HOJA DE LISTA NEGRA ---
 def obtener_hoja_lista_negra(wb):
     try:
         return wb.worksheet("Lista Negra")
@@ -321,7 +312,6 @@ def obtener_hoja_lista_negra(wb):
 
 tab_formulario, tab_dashboard = st.tabs(["📝 Postularme al Roster", "📊 Panel Gerencial (Dashboard)"])
 
-# --- APARTADO FORMULARIO ---
 with tab_formulario:
     st.title("📝 Formulario de Postulación - Scarlet Esports")
     st.markdown("Selecciona la división y tu método de contacto preferido para completar tus datos.")
@@ -426,7 +416,6 @@ with tab_formulario:
                 st.error("⚠️ Error de conexión con Google Sheets.")
             else:
                 try:
-                    # --- COMPROBACIÓN DE LISTA NEGRA ---
                     ws_bl = obtener_hoja_lista_negra(workbook)
                     registros_bl = ws_bl.get_all_values() if ws_bl else []
                     esta_vetado = False
@@ -474,8 +463,6 @@ with tab_formulario:
                 except Exception as e:
                     st.error(f"Hubo un error al registrar tus datos: {e}")
 
-
-# --- APARTADO DASHBOARD ---
 with tab_dashboard:
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
@@ -541,7 +528,6 @@ with tab_dashboard:
 
         df = load_data_from_sheet(div_dashboard)
 
-        # --- SECCIÓN: CAMBIAR CONTRASEÑA ADMIN ---
         with st.sidebar.expander("🔑 Cambiar Contraseña Gerencial"):
             with st.form("form_cambio_pass", clear_on_submit=True):
                 pwd_actual = st.text_input("Contraseña Actual:", type="password")
@@ -560,11 +546,10 @@ with tab_dashboard:
                     else:
                         if actualizar_password_admin(pwd_nueva.strip()):
                             st.success("✅ ¡Contraseña actualizada exitosamente!")
-                            admin_password = pwd_nueva.strip() # Actualiza la memoria local
+                            admin_password = pwd_nueva.strip() 
                         else:
                             st.error("❌ Error al guardar la nueva contraseña en Google Sheets.")
 
-        # --- SECCIÓN: MOVER A LISTA NEGRA (VETAR) ---
         with st.sidebar.expander("🚫 Vetar / Mover a Lista Negra"):
             if not df.empty:
                 col_id_name = df.columns[0]
@@ -608,7 +593,6 @@ with tab_dashboard:
             else:
                 st.info("No hay postulantes registrados en esta división.")
 
-        # --- SECCIÓN: DESVETAR (QUITAR DE LISTA NEGRA) ---
         with st.sidebar.expander("🟢 Desvetar / Quitar de Lista Negra"):
             df_bl_data = load_data_from_sheet("Lista Negra")
             if not df_bl_data.empty:
@@ -644,58 +628,6 @@ with tab_dashboard:
             else:
                 st.info("No hay jugadores actualmente en la Lista Negra.")
 
-        # --- SECCIÓN: MODIFICAR ESTADO DE POSTULANTE ---
-        with st.sidebar.expander("📝 Modificar Estado de Postulante"):
-            if not df.empty:
-                col_estado_mod = next((c for c in df.columns if 'estado' in c.lower()), None)
-                if not col_estado_mod:
-                    col_estado_mod = df.columns[-2]
-                
-                col_id_name_mod = df.columns[0]
-                
-                opciones_estado = {}
-                for idx, row in df.iterrows():
-                    val_id = row[col_id_name_mod]
-                    estado_actual = str(row[col_estado_mod]).strip() if pd.notna(row[col_estado_mod]) else "Desconocido"
-                    etiqueta = f"🎮 {val_id} | Estado: {estado_actual}"
-                    opciones_estado[etiqueta] = (idx + 2, estado_actual)
-                
-                postulante_sel_estado = st.selectbox("Selecciona al postulante", list(opciones_estado.keys()), key="sb_modificar_estado")
-                
-                estado_previo = opciones_estado[postulante_sel_estado][1]
-                lista_estados = ["Tryout", "Aceptado", "Rechazado", "Vetado"]
-                
-                index_defecto = lista_estados.index(estado_previo.capitalize()) if estado_previo.capitalize() in lista_estados else 0
-                nuevo_estado = st.selectbox("Nuevo Estado", lista_estados, index=index_defecto)
-                
-                if "estado_count" not in st.session_state:
-                    st.session_state["estado_count"] = 0
-                
-                key_estado = f"pwd_estado_{st.session_state['estado_count']}"
-                pwd_estado = st.text_input("Confirma contraseña gerencial para guardar:", type="password", key=key_estado)
-                
-                if st.button("💾 Guardar Nuevo Estado", use_container_width=True):
-                    if pwd_estado == admin_password:
-                        try:
-                            fila_a_modificar = opciones_estado[postulante_sel_estado][0]
-                            col_idx = df.columns.tolist().index(col_estado_mod) + 1
-                            
-                            ws_estado = workbook.worksheet(div_dashboard)
-                            ws_estado.update_cell(fila_a_modificar, col_idx, nuevo_estado)
-                            
-                            st.cache_data.clear()
-                            st.session_state["estado_count"] += 1
-                            
-                            st.sidebar.success(f"✅ Estado actualizado a '{nuevo_estado}' con éxito.")
-                            st.rerun()
-                        except Exception as e:
-                            st.sidebar.error(f"❌ Error al actualizar el estado: {e}")
-                    else:
-                        st.sidebar.error("❌ Contraseña incorrecta. Modificación cancelada.")
-            else:
-                st.info("No hay postulantes registrados en esta división.")
-
-        # --- SECCIÓN: BORRAR ESPECÍFICO (SIN VETAR) ---
         with st.sidebar.expander("👤 Borrar Postulante (Sin Vetar)"):
             if not df.empty:
                 col_id_name = df.columns[0]
@@ -732,7 +664,6 @@ with tab_dashboard:
             else:
                 st.info("No hay postulantes registrados en esta división.")
 
-        # --- SECCIÓN: LIMPIAR BASE DE DATOS TOTAL ---
         with st.sidebar.expander("🚨 Zona de Peligro (Limpiar DB)"):
             st.warning(f"⚠️ Estás a punto de BORRAR TODOS los postulantes de: **{div_dashboard}**")
             st.caption("Esta acción no afectará a las otras divisiones y conservará los encabezados.")
@@ -757,69 +688,113 @@ with tab_dashboard:
 
         st.sidebar.markdown("---")
 
-        if df.empty:
-            st.warning(f"⚠️ Aún no hay datos de postulantes para la división {div_dashboard}.")
-        else:
-            df.columns = [str(c).strip() for c in df.columns]
-            
-            col_estado = next((c for c in df.columns if 'estado' in c.lower()), None)
-            if not col_estado:
-                df['Estado'] = 'Tryout'
-                col_estado = 'Estado'
+        subtab_general, subtab_estado = st.tabs(["📊 Visión General", "📝 Modificar Estado"])
 
-            col_contacto = next((c for c in df.columns if 'contacto' in c.lower() or 'discord' in c.lower()), df.columns[1])
-            total_postulantes = len(df[df[col_contacto] != ''])
-            tryouts_activos = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'tryout']) 
-            aceptados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'aceptado']) 
+        with subtab_general:
+            if df.empty:
+                st.warning(f"⚠️ Aún no hay datos de postulantes para la división {div_dashboard}.")
+            else:
+                df.columns = [str(c).strip() for c in df.columns]
+                
+                col_estado = next((c for c in df.columns if 'estado' in c.lower()), None)
+                if not col_estado:
+                    df['Estado'] = 'Tryout'
+                    col_estado = 'Estado'
 
-            col_baneos = next((c for c in df.columns if 'bano' in c.lower() or 'baneo' in c.lower() or 'historial' in c.lower()), None)
-            baneos_alerta = len(df[df[col_baneos].astype(str).str.strip().isin(['Chat Ban', 'Ranked Ban', 'Permanente/HWID'])]) if col_baneos else 0
+                col_contacto = next((c for c in df.columns if 'contacto' in c.lower() or 'discord' in c.lower()), df.columns[1])
+                total_postulantes = len(df[df[col_contacto] != ''])
+                tryouts_activos = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'tryout']) 
+                aceptados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'aceptado']) 
 
-            col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Postulantes Totales", total_postulantes)
-            col2.metric("Pruebas Activas", tryouts_activos, delta="En proceso")
-            col3.metric("Plantel Aceptado", aceptados)
-            col4.metric("Alertas de Baneos", baneos_alerta, delta_color="inverse" if baneos_alerta > 0 else "normal")
+                col_baneos = next((c for c in df.columns if 'bano' in c.lower() or 'baneo' in c.lower() or 'historial' in c.lower()), None)
+                baneos_alerta = len(df[df[col_baneos].astype(str).str.strip().isin(['Chat Ban', 'Ranked Ban', 'Permanente/HWID'])]) if col_baneos else 0
+
+                col1, col2, col3, col4 = st.columns(4)
+                col1.metric("Postulantes Totales", total_postulantes)
+                col2.metric("Pruebas Activas", tryouts_activos, delta="En proceso")
+                col3.metric("Plantel Aceptado", aceptados)
+                col4.metric("Alertas de Baneos", baneos_alerta, delta_color="inverse" if baneos_alerta > 0 else "normal")
+
+                st.markdown("---")
+
+                col_g1, col_g2 = st.columns(2)
+
+                with col_g1:
+                    st.subheader("📊 Distribución por Estado")
+                    if not df[col_estado].empty:
+                        fig_estado = px.pie(df, names=col_estado, hole=0.5, color_discrete_sequence=px.colors.sequential.Reds)
+                        fig_estado.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#f0f2f6')
+                        st.plotly_chart(fig_estado, use_container_width=True)
+
+                with col_g2:
+                    if div_dashboard == "Fighting":
+                        st.subheader("🥊 Demanda por Juego")
+                        col_juego = next((c for c in df.columns if 'juego' in c.lower()), None)
+                        if col_juego and not df[col_juego].empty:
+                            juego_counts = df[col_juego].value_counts().reset_index()
+                            juego_counts.columns = ['Juego', 'Cantidad']
+                            fig_roles = px.bar(juego_counts, x='Juego', y='Cantidad', color='Juego', color_discrete_sequence=['#ff4655', '#e94560', '#ff6b6b'])
+                            fig_roles.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#f0f2f6', showlegend=False)
+                            st.plotly_chart(fig_roles, use_container_width=True)
+                    else:
+                        st.subheader("⚔️ Demanda por Rol")
+                        col_rol = next((c for c in df.columns if 'rol' in c.lower()), None)
+                        if col_rol and not df[col_rol].empty:
+                            rol_counts = df[col_rol].value_counts().reset_index()
+                            rol_counts.columns = ['Rol', 'Cantidad']
+                            fig_roles = px.bar(rol_counts, x='Rol', y='Cantidad', color='Rol', color_discrete_sequence=['#ff4655', '#e94560', '#ff6b6b'])
+                            fig_roles.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#f0f2f6', showlegend=False)
+                            st.plotly_chart(fig_roles, use_container_width=True)
+
+                st.subheader("📋 Registro Detallado")
+                st.dataframe(df, use_container_width=True)
 
             st.markdown("---")
-
-            col_g1, col_g2 = st.columns(2)
-
-            with col_g1:
-                st.subheader("📊 Distribución por Estado")
-                if not df[col_estado].empty:
-                    fig_estado = px.pie(df, names=col_estado, hole=0.5, color_discrete_sequence=px.colors.sequential.Reds)
-                    fig_estado.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#f0f2f6')
-                    st.plotly_chart(fig_estado, use_container_width=True)
-
-            with col_g2:
-                if div_dashboard == "Fighting":
-                    st.subheader("🥊 Demanda por Juego")
-                    col_juego = next((c for c in df.columns if 'juego' in c.lower()), None)
-                    if col_juego and not df[col_juego].empty:
-                        juego_counts = df[col_juego].value_counts().reset_index()
-                        juego_counts.columns = ['Juego', 'Cantidad']
-                        fig_roles = px.bar(juego_counts, x='Juego', y='Cantidad', color='Juego', color_discrete_sequence=['#ff4655', '#e94560', '#ff6b6b'])
-                        fig_roles.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#f0f2f6', showlegend=False)
-                        st.plotly_chart(fig_roles, use_container_width=True)
+            with st.expander("👀 Ver Registro General de Jugadores Vetados (Lista Negra)"):
+                df_bl = load_data_from_sheet("Lista Negra")
+                if not df_bl.empty:
+                    st.dataframe(df_bl, use_container_width=True)
                 else:
-                    st.subheader("⚔️ Demanda por Rol")
-                    col_rol = next((c for c in df.columns if 'rol' in c.lower()), None)
-                    if col_rol and not df[col_rol].empty:
-                        rol_counts = df[col_rol].value_counts().reset_index()
-                        rol_counts.columns = ['Rol', 'Cantidad']
-                        fig_roles = px.bar(rol_counts, x='Rol', y='Cantidad', color='Rol', color_discrete_sequence=['#ff4655', '#e94560', '#ff6b6b'])
-                        fig_roles.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#f0f2f6', showlegend=False)
-                        st.plotly_chart(fig_roles, use_container_width=True)
+                    st.info("Actualmente no hay jugadores vetados en la Lista Negra.")
 
-            st.subheader("📋 Registro Detallado")
-            st.dataframe(df, use_container_width=True)
-
-        # --- PESTAÑA INFORMATIVA DE LISTA NEGRA ---
-        st.markdown("---")
-        with st.expander("👀 Ver Registro General de Jugadores Vetados (Lista Negra)"):
-            df_bl = load_data_from_sheet("Lista Negra")
-            if not df_bl.empty:
-                st.dataframe(df_bl, use_container_width=True)
+        with subtab_estado:
+            st.subheader(f"📝 Modificar Estado en {div_dashboard}")
+            
+            if not df.empty:
+                col_estado_mod = next((c for c in df.columns if 'estado' in c.lower()), None)
+                if not col_estado_mod:
+                    col_estado_mod = df.columns[-2]
+                
+                col_id_name_mod = df.columns[0]
+                
+                opciones_estado = {}
+                for idx, row in df.iterrows():
+                    val_id = row[col_id_name_mod]
+                    estado_actual = str(row[col_estado_mod]).strip() if pd.notna(row[col_estado_mod]) else "Desconocido"
+                    etiqueta = f"🎮 {val_id} | Estado: {estado_actual}"
+                    opciones_estado[etiqueta] = (idx + 2, estado_actual)
+                
+                postulante_sel_estado = st.selectbox("Selecciona al postulante", list(opciones_estado.keys()), key="sb_modificar_estado_tab")
+                
+                estado_previo = opciones_estado[postulante_sel_estado][1]
+                lista_estados = ["Tryout", "Aceptado", "Rechazado", "Vetado"]
+                
+                index_defecto = lista_estados.index(estado_previo.capitalize()) if estado_previo.capitalize() in lista_estados else 0
+                nuevo_estado = st.selectbox("Nuevo Estado", lista_estados, index=index_defecto)
+                
+                if st.button("💾 Guardar Nuevo Estado", use_container_width=True):
+                    try:
+                        fila_a_modificar = opciones_estado[postulante_sel_estado][0]
+                        col_idx = df.columns.tolist().index(col_estado_mod) + 1
+                        
+                        ws_estado = workbook.worksheet(div_dashboard)
+                        ws_estado.update_cell(fila_a_modificar, col_idx, nuevo_estado)
+                        
+                        st.cache_data.clear()
+                        
+                        st.success(f"✅ Estado actualizado a '{nuevo_estado}' con éxito.")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Error al actualizar el estado: {e}")
             else:
-                st.info("Actualmente no hay jugadores vetados en la Lista Negra.")
+                st.info("No hay postulantes registrados en esta división.")
