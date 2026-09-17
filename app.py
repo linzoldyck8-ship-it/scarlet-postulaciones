@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- ESTILOS CSS AVANZADOS ---
+# --- ESTILOS CSS AVANZADOS (BARRA DE PESTAÑAS ESTILO GAMING) ---
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -84,6 +84,55 @@ st.markdown("""
         box-shadow: 0 0 18px rgba(255, 70, 85, 0.8);
         color: white;
     }
+
+    /* --- ESTILO NAVBAR / PESTAÑAS GAMING --- */
+    /* Contenedor general de las pestañas */
+    div[data-baseweb="tab-list"] {
+        background-color: transparent !important;
+        gap: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 5px;
+    }
+    
+    /* Botón / Pestaña individual */
+    div[data-baseweb="tab"] {
+        background-color: transparent !important;
+        border-radius: 6px 6px 0 0 !important;
+        padding: 10px 20px !important;
+        transition: background 0.3s ease;
+    }
+
+    /* Texto de las pestañas */
+    div[data-baseweb="tab"] p {
+        font-size: 1.15rem !important;
+        font-weight: bold !important;
+        color: #8b949e !important;
+        transition: color 0.3s ease;
+    }
+
+    /* Efecto Hover con Gradiente Escarlata */
+    div[data-baseweb="tab"]:hover {
+        background: linear-gradient(180deg, rgba(255, 70, 85, 0.05) 0%, rgba(255, 70, 85, 0.25) 100%) !important;
+    }
+    div[data-baseweb="tab"]:hover p {
+        color: #ffffff !important;
+    }
+
+    /* Pestaña Activa / Seleccionada con Gradiente y Línea Roja */
+    div[data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(180deg, rgba(255, 70, 85, 0.1) 0%, rgba(255, 70, 85, 0.35) 100%) !important;
+    }
+    div[data-baseweb="tab"][aria-selected="true"] p {
+        color: #ffffff !important;
+        text-shadow: 0 0 8px rgba(255, 70, 85, 0.6);
+    }
+
+    /* Línea indicadora inferior de Streamlit personalizada */
+    div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {
+        background-color: #ff4655 !important;
+        height: 3px !important;
+        box-shadow: 0 0 10px #ff4655;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -114,9 +163,7 @@ with tab_formulario:
     st.title("📝 Formulario de Postulación - Scarlet Esports")
     st.markdown("Selecciona la división a la que deseas aplicar y completa tus datos correctamente.")
 
-    # Listas oficiales permitidas para validación posterior
-    opciones_division = ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"]
-    division = st.selectbox("🎮 Selecciona la División", opciones_division)
+    division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
 
     with st.form("form_postulacion"):
         col_f1, col_f2 = st.columns(2)
@@ -127,58 +174,39 @@ with tab_formulario:
             
             if division in ["Valorant", "Valorant Femenino"]:
                 player_id = st.text_input("Riot ID (Ej: Scarlet#NA1)", autocomplete="off")
-                roles_validos = ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"]
-                rol = st.selectbox("Rol", roles_validos)
-                rangos_val = ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"]
-                rango_actual = st.selectbox("Rango Actual", rangos_val)
-                peak_elo = st.selectbox("Peak Elo", rangos_val)
+                rol = st.selectbox("Rol", ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"])
+                rango_actual = st.selectbox("Rango Actual", ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"])
+                peak_elo = st.selectbox("Peak Elo", ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"])
             
             elif division == "Overwatch":
                 player_id = st.text_input("BattleTag (Ej: Scarlet#1234)", autocomplete="off")
-                roles_validos = ["Tanque", "DPS", "Support", "Flex"]
-                rol = st.selectbox("Rol", roles_validos)
-                rangos_val = ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"]
-                rango_actual = st.selectbox("Rango Actual", rangos_val)
-                peak_elo = st.selectbox("Peak Elo", rangos_val)
+                rol = st.selectbox("Rol", ["Tanque", "DPS", "Support", "Flex"])
+                rango_actual = st.selectbox("Rango Actual", ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"])
+                peak_elo = st.selectbox("Peak Elo", ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"])
             
             elif division == "CS GO":
                 player_id = st.text_input("Steam ID o Link de Perfil", autocomplete="off")
-                roles_validos = ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Flex"]
-                rol = st.selectbox("Rol", roles_validos)
+                rol = st.selectbox("Rol", ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Flex"])
                 rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k)", autocomplete="off")
                 peak_elo = st.text_input("Peak Elo / Max Rating", autocomplete="off")
                 
             elif division == "Fighting":
                 player_id = st.text_input("ID del Jugador (CFN, Tekken ID, etc.)", autocomplete="off")
-                juegos_validos = ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"]
-                juego_esp = st.selectbox("Juego Específico", juegos_validos)
+                juego_esp = st.selectbox("Juego Específico", ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"])
                 personaje = st.text_input("Personaje(s) Main", autocomplete="off")
                 rango_actual = st.text_input("Rango Actual", autocomplete="off")
                 peak_elo = st.text_input("Peak Elo", autocomplete="off")
 
         with col_f2:
-            baneos_validos = ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"]
-            baneos = st.selectbox("Historial de Baneos / Toxicidad", baneos_validos)
-            
-            horarios_validos = ["Mañana", "Tarde", "Noche", "Madrugada", "Flexible"]
-            horario = st.selectbox("Horario Disponible", horarios_validos)
-            
+            baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
+            horario = st.selectbox("Horario Disponible", ["Mañana", "Tarde", "Noche", "Madrugada", "Flexible"])
             notas = st.text_input("Link de Tracker / VODs / Notas adicionales", autocomplete="off")
             
             st.markdown("<br><br>", unsafe_allow_html=True) 
             submitted = st.form_submit_button("🚀 Enviar Postulación")
 
         if submitted:
-            # Validación estricta para evitar que ingresen valores alterados manualmente en selects
-            if division == "Fighting" and juego_esp not in ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"]:
-                st.error("⚠️ Selecciona un juego válido de la lista desplegable.")
-            elif division in ["Valorant", "Valorant Femenino", "Overwatch", "CS GO"] and rol not in roles_validos:
-                st.error("⚠️ Selecciona un rol válido de la lista desplegable.")
-            elif baneo_invalido := (baneos not in baneos_validos):
-                st.error("⚠️ Selecciona un historial de baneos válido de la lista.")
-            elif horario not in horarios_validos:
-                st.error("⚠️ Selecciona un horario disponible válido de la lista.")
-            elif not contacto_discord or not player_id:
+            if not contacto_discord or not player_id:
                 st.error("⚠️ Por favor completa tu Contacto de Discord y tu ID de Jugador.")
             elif edad < 14:
                 st.error("⚠️ Debes tener al menos 14 años para postularte a Scarlet Esports.")
