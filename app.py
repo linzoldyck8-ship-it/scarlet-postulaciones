@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
@@ -29,6 +30,15 @@ RANGOS_OVERWATCH = [
     "Gran Maestro 5", "Gran Maestro 4", "Gran Maestro 3", "Gran Maestro 2", "Gran Maestro 1",
     "Campeón"
 ]
+
+# DICIONARIO PARA ETIQUETAR LOS IDS SEGÚN LA DIVISIÓN
+ETIQUETAS_ID = {
+    "Valorant": "Riot ID",
+    "Valorant Femenino": "Riot ID",
+    "Overwatch": "BattleTag",
+    "CS GO": "Steam ID",
+    "Fighting": "ID Jugador"
+}
 
 # --- FUNCIÓN DE VALIDACIÓN DE CORREO ELECTRÓNICO ---
 def es_correo_valido(correo):
@@ -68,6 +78,26 @@ st.set_page_config(
     page_icon="https://raw.githubusercontent.com/linzoldyck8-ship-it/valo-lino-/main/SCARLET.png",
     layout="wide"
 )
+
+# --- SCRIPT JS PARA DESACTIVAR POPUPS DE EXTENSIONES Y AUTOCOMPLETADO ---
+components.html("""
+<script>
+function bloquearPopups() {
+    const doc = window.parent.document;
+    const inputs = doc.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.setAttribute('autocomplete', 'new-password');
+        input.setAttribute('data-bwignore', 'true');
+        input.setAttribute('data-lpignore', 'true');
+        input.setAttribute('data-1p-ignore', 'true');
+        input.setAttribute('data-form-type', 'other');
+        input.setAttribute('aria-autocomplete', 'none');
+    });
+}
+setTimeout(bloquearPopups, 300);
+setInterval(bloquearPopups, 1500);
+</script>
+""", height=0)
 
 # --- ESTILOS CSS AVANZADOS ---
 st.markdown("""
@@ -281,41 +311,40 @@ with tab_formulario:
             elif tipo_contacto == "Número Telefónico":
                 placeholder_txt = "Ej: +56912345678"
             else:
-                placeholder_txt = "Ej: usuario@gmail.com"
+                placeholder_txt = "Ej: usuario@dominio.com"
 
-            contacto_valor = st.text_input(f"Ingresa tu {tipo_contacto}", placeholder=placeholder_txt, autocomplete="off")
+            contacto_valor = st.text_input(f"Ingresa tu {tipo_contacto}", placeholder=placeholder_txt)
             edad = st.number_input("Edad", min_value=10, max_value=80, value=18, step=1)
             
             if division in ["Valorant", "Valorant Femenino"]:
-                player_id = st.text_input("Riot ID (Ej: Scarlet#NA1)", autocomplete="off")
+                player_id = st.text_input("Riot ID (Ej: Scarlet#NA1)")
                 rol = st.selectbox("Rol", ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"])
                 rango_actual = st.selectbox("Rango Actual", RANGOS_VALORANT)
                 peak_elo = st.selectbox("Peak Elo", RANGOS_VALORANT)
             
             elif division == "Overwatch":
-                player_id = st.text_input("BattleTag (Ej: Scarlet#1234)", autocomplete="off")
+                player_id = st.text_input("BattleTag (Ej: Scarlet#1234)")
                 rol = st.selectbox("Rol", ["Tanque", "DPS", "Support", "Flex"])
                 rango_actual = st.selectbox("Rango Actual", RANGOS_OVERWATCH)
                 peak_elo = st.selectbox("Peak Elo", RANGOS_OVERWATCH)
             
             elif division == "CS GO":
-                player_id = st.text_input("Steam ID o Link de Perfil", autocomplete="off")
+                player_id = st.text_input("Steam ID o Link de Perfil")
                 rol = st.selectbox("Rol", ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Flex"])
-                rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k, FACEIT Lvl 10)", autocomplete="off")
-                peak_elo = st.text_input("Peak Elo / Max Rating", autocomplete="off")
+                rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k, FACEIT Lvl 10)")
+                peak_elo = st.text_input("Peak Elo / Max Rating")
                 
             elif division == "Fighting":
-                player_id = st.text_input("ID del Jugador (CFN, Tekken ID, etc.)", autocomplete="off")
+                player_id = st.text_input("ID del Jugador (CFN, Tekken ID, etc.)")
                 juego_esp = st.selectbox("Juego Específico", ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"])
-                personaje = st.text_input("Personaje(s) Main", autocomplete="off")
-                rango_actual = st.text_input("Rango Actual", autocomplete="off")
-                peak_elo = st.text_input("Peak Elo", autocomplete="off")
+                personaje = st.text_input("Personaje(s) Main")
+                rango_actual = st.text_input("Rango Actual")
+                peak_elo = st.text_input("Peak Elo")
 
         with col_f2:
             baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
-            notas = st.text_input("Link de Tracker / VODs / Notas adicionales", autocomplete="off")
+            notas = st.text_input("Link de Tracker / VODs / Notas adicionales")
 
-        # --- FILA INFERIOR: BOTÓN EN EL EXTREMO INFERIOR DERECHO ---
         st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
         col_espacio, col_boton = st.columns([1, 1])
         with col_boton:
@@ -336,7 +365,6 @@ with tab_formulario:
                 try:
                     ws = workbook.worksheet(division)
                     
-                    # --- COMPROBACIÓN DE DUPLICADOS ---
                     registros_existentes = ws.get_all_values()
                     duplicado = False
                     for fila in registros_existentes[1:]:
@@ -370,7 +398,7 @@ with tab_formulario:
 # --- APARTADO DASHBOARD ---
 with tab_dashboard:
     st.subheader("🔒 Acceso Restringido")
-    clave_acceso = st.text_input("Ingrese la clave para ver el panel gerencial", type="password", autocomplete="off")
+    clave_acceso = st.text_input("Ingrese la clave para ver el panel gerencial", type="password")
     
     if clave_acceso == "cazuela":
         count = st_autorefresh(interval=10000, limit=None, key="scarlet_autorefresh")
@@ -404,17 +432,20 @@ with tab_dashboard:
 
         df = load_data_from_sheet(div_dashboard)
 
-        # --- SECCIÓN DE GESTIÓN GERENCIAL (BORRAR ESPECÍFICO Y BASE DE DATOS) ---
+        # --- SECCIÓN DE GESTIÓN GERENCIAL (BORRAR ESPECÍFICO) ---
         with st.sidebar.expander("👤 Borrar Postulante Específico"):
             if not df.empty:
                 col_id_name = df.columns[0]
                 col_contact_name = df.columns[1] if len(df.columns) > 1 else col_id_name
+                tipo_id_actual = ETIQUETAS_ID.get(div_dashboard, "ID Jugador")
                 
-                # Lista desplegable de postulantes con ID y contacto
-                opciones_postulantes = {
-                    f"Fila {idx + 2}: {row[col_id_name]} ({row[col_contact_name]})": idx + 2
-                    for idx, row in df.iterrows()
-                }
+                # Menú desplegable etiquetando explícitamente el Riot ID / BattleTag / Steam ID
+                opciones_postulantes = {}
+                for idx, row in df.iterrows():
+                    val_id = row[col_id_name]
+                    val_contacto = row[col_contact_name]
+                    etiqueta = f"🎮 {tipo_id_actual}: {val_id} ({val_contacto})"
+                    opciones_postulantes[etiqueta] = idx + 2
                 
                 postulante_sel = st.selectbox("Selecciona al postulante a eliminar", list(opciones_postulantes.keys()))
                 pwd_del_indiv = st.text_input("Confirma contraseña gerencial para eliminar:", type="password", key="pwd_del_indiv")
@@ -426,7 +457,7 @@ with tab_dashboard:
                             ws_del = workbook.worksheet(div_dashboard)
                             ws_del.delete_rows(fila_a_borrar)
                             st.cache_data.clear()
-                            st.sidebar.success(f"✅ Postulante de la fila {fila_a_borrar} eliminado con éxito.")
+                            st.sidebar.success(f"✅ Postulante eliminado con éxito.")
                             st.rerun()
                         except Exception as e:
                             st.sidebar.error(f"❌ Error al eliminar postulante: {e}")
