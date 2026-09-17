@@ -26,10 +26,11 @@ RANGOS_OVERWATCH = [
     "Plata 5", "Plata 4", "Plata 3", "Plata 2", "Plata 1",
     "Oro 5", "Oro 4", "Oro 3", "Oro 2", "Oro 1",
     "Platino 5", "Platino 4", "Platino 3", "Platino 2", "Platino 1",
+    "Esmeralda 5","Esmeralda 4","Esmeralda 3","Esmeralda 2","Esmeralda 1",
     "Diamante 5", "Diamante 4", "Diamante 3", "Diamante 2", "Diamante 1",
     "Maestro 5", "Maestro 4", "Maestro 3", "Maestro 2", "Maestro 1",
     "Gran Maestro 5", "Gran Maestro 4", "Gran Maestro 3", "Gran Maestro 2", "Gran Maestro 1",
-    "Campeón"
+    "TOP 500"
 ]
 
 # DICCIONARIO PARA ETIQUETAR LOS IDS SEGÚN LA DIVISIÓN
@@ -50,7 +51,7 @@ def es_correo_valido(correo):
 HORARIOS_DIVISIONES = {
     "Valorant": {
         "División A": {"horario": "20:00 - 23:00 (Lun a Vie)", "rango": "Inmortal"},
-        "División B": {"horario": "18:00 - 21:00 (Lun a Vie)", "rango": "Ascendente"},
+        "División B": {"horario": "21:00 - 23:00 (Lun a Vie)", "rango": "plata"},
         "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "CS GO": {
