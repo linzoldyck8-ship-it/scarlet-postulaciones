@@ -763,10 +763,19 @@ with tab_dashboard:
                 st.dataframe(df, use_container_width=True)
 
             st.markdown("---")
-            with st.expander("👀 Ver Registro General de Jugadores Vetados (Lista Negra)"):
+            with st.expander(f"👀 Ver Jugadores Vetados en {div_dashboard} (Lista Negra)"):
                 df_bl = load_data_from_sheet("Lista Negra")
                 if not df_bl.empty:
-                    st.dataframe(df_bl, use_container_width=True)
+                    col_div_orig = next((c for c in df_bl.columns if 'división' in c.lower() or 'origen' in c.lower()), None)
+                    if col_div_orig:
+                        df_bl_filtered = df_bl[df_bl[col_div_orig].astype(str).str.strip() == div_dashboard]
+                    else:
+                        df_bl_filtered = df_bl
+                    
+                    if not df_bl_filtered.empty:
+                        st.dataframe(df_bl_filtered, use_container_width=True)
+                    else:
+                        st.info(f"Actualmente no hay jugadores vetados en la Lista Negra para la división {div_dashboard}.")
                 else:
                     st.info("Actualmente no hay jugadores vetados en la Lista Negra.")
 
