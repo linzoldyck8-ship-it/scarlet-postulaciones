@@ -87,7 +87,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Configuración de Google Sheets API (NUEVO ID CREADO)
+# Configuración de Google Sheets API
 SHEET_ID = "1a-D3wfr9XBwFIE34wAY-9-16eB3ABHndPsxq_6dbWqE"
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
@@ -114,47 +114,44 @@ with tab_formulario:
     st.title("📝 Formulario de Postulación - Scarlet Esports")
     st.markdown("Selecciona la división a la que deseas aplicar y completa tus datos correctamente.")
 
-    # Selector de División fuera del form para que actualice los campos dinámicamente
     division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
 
     with st.form("form_postulacion"):
         col_f1, col_f2 = st.columns(2)
         
         with col_f1:
-            contacto_discord = st.text_input("Contacto Discord (Usuario)")
+            contacto_discord = st.text_input("Contacto Discord (Usuario)", autocomplete="off")
             
-            # Campos dinámicos según el juego
             if division in ["Valorant", "Valorant Femenino"]:
-                player_id = st.text_input("Riot ID (Ej: Scarlet#NA1)")
+                player_id = st.text_input("Riot ID (Ej: Scarlet#NA1)", autocomplete="off")
                 rol = st.selectbox("Rol", ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"])
                 rango_actual = st.selectbox("Rango Actual", ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"])
                 peak_elo = st.selectbox("Peak Elo", ["Hierro-Plata", "Oro", "Platino", "Diamante", "Ascendente", "Inmortal", "Radiante"])
             
             elif division == "Overwatch":
-                player_id = st.text_input("BattleTag (Ej: Scarlet#1234)")
+                player_id = st.text_input("BattleTag (Ej: Scarlet#1234)", autocomplete="off")
                 rol = st.selectbox("Rol", ["Tanque", "DPS", "Support", "Flex"])
                 rango_actual = st.selectbox("Rango Actual", ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"])
                 peak_elo = st.selectbox("Peak Elo", ["Bronce-Oro", "Platino", "Diamante", "Maestro", "Gran Maestro", "Champion"])
             
             elif division == "CS GO":
-                player_id = st.text_input("Steam ID o Link de Perfil")
+                player_id = st.text_input("Steam ID o Link de Perfil", autocomplete="off")
                 rol = st.selectbox("Rol", ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Flex"])
-                rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k)")
-                peak_elo = st.text_input("Peak Elo / Max Rating")
+                rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k)", autocomplete="off")
+                peak_elo = st.text_input("Peak Elo / Max Rating", autocomplete="off")
                 
             elif division == "Fighting":
-                player_id = st.text_input("ID del Jugador (CFN, Tekken ID, etc.)")
+                player_id = st.text_input("ID del Jugador (CFN, Tekken ID, etc.)", autocomplete="off")
                 juego_esp = st.selectbox("Juego Específico", ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"])
-                personaje = st.text_input("Personaje(s) Main")
-                rango_actual = st.text_input("Rango Actual")
-                peak_elo = st.text_input("Peak Elo")
+                personaje = st.text_input("Personaje(s) Main", autocomplete="off")
+                rango_actual = st.text_input("Rango Actual", autocomplete="off")
+                peak_elo = st.text_input("Peak Elo", autocomplete="off")
 
         with col_f2:
             baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
             horario = st.selectbox("Horario Disponible", ["Mañana", "Tarde", "Noche", "Madrugada", "Flexible"])
-            notas = st.text_input("Link de Tracker / VODs / Notas adicionales")
+            notas = st.text_input("Link de Tracker / VODs / Notas adicionales", autocomplete="off")
             
-            # Espaciador para alinear el botón
             st.markdown("<br><br>", unsafe_allow_html=True) 
             submitted = st.form_submit_button("🚀 Enviar Postulación")
 
@@ -165,10 +162,8 @@ with tab_formulario:
                 st.error("⚠️ Error de conexión con Google Sheets.")
             else:
                 try:
-                    # Conectar a la pestaña específica
                     ws = workbook.worksheet(division)
                     
-                    # Estructurar la fila según el orden de columnas en la Base de Datos para cada juego
                     if division in ["Valorant", "Valorant Femenino"]:
                         nueva_fila = [player_id, contacto_discord, rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
                     elif division == "Overwatch":
@@ -187,14 +182,13 @@ with tab_formulario:
 # --- APARTADO DASHBOARD ---
 with tab_dashboard:
     st.subheader("🔒 Acceso Restringido")
-    clave_acceso = st.text_input("Ingrese la clave para ver el panel gerencial", type="password")
+    clave_acceso = st.text_input("Ingrese la clave para ver el panel gerencial", type="password", autocomplete="off")
     
     if clave_acceso == "cazuela":
         count = st_autorefresh(interval=10000, limit=None, key="scarlet_autorefresh")
 
         st.title("🔥 PANEL GERENCIAL SCARLET ESPORTS")
         
-        # Selector de división para el Dashboard
         div_dashboard = st.sidebar.selectbox("📊 Analizar División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
         st.markdown(f"### Mostrando métricas de: **{div_dashboard}**")
 
@@ -210,8 +204,9 @@ with tab_dashboard:
                 ws = workbook.worksheet(sheet_name)
                 data = ws.get_all_values()
                 if len(data) > 1:
-                    # Convierte a DataFrame usando la primera fila como cabecera
-                    df = pd.DataFrame(data[1:], columns=data[0])
+                    headers = data[0]
+                    headers = [h if h.strip() != "" else f"Col_Extra_{i}" for i, h in enumerate(headers)]
+                    df = pd.DataFrame(data[1:], columns=headers)
                     return df
                 else:
                     return pd.DataFrame(columns=data[0] if data else [])
@@ -223,16 +218,13 @@ with tab_dashboard:
         if df.empty:
             st.warning(f"⚠️ Aún no hay datos de postulantes para la división {div_dashboard}.")
         else:
-            # Limpiar columnas
             df.columns = [str(c).strip() for c in df.columns]
             
-            # Buscar dinámicamente el nombre de la columna "Estado" o crearla visualmente si no existe
             col_estado = next((c for c in df.columns if 'estado' in c.lower()), None)
             if not col_estado:
-                df['Estado'] = 'Tryout' # Asignar valor por defecto para visualización si alguien borra la columna
+                df['Estado'] = 'Tryout'
                 col_estado = 'Estado'
 
-            # Métricas
             col_discord = next((c for c in df.columns if 'discord' in c.lower()), df.columns[1])
             total_postulantes = len(df[df[col_discord] != ''])
             tryouts_activos = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'tryout']) 
@@ -259,7 +251,6 @@ with tab_dashboard:
                     st.plotly_chart(fig_estado, use_container_width=True)
 
             with col_g2:
-                # Lógica para mostrar gráficos diferentes según el juego
                 if div_dashboard == "Fighting":
                     st.subheader("🥊 Demanda por Juego")
                     col_juego = next((c for c in df.columns if 'juego' in c.lower()), None)
