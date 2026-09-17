@@ -11,7 +11,7 @@ def es_correo_valido(correo):
     patron = r'^[\w\.-]+@[\w\.-]+\.\w+$'
     return re.match(patron, correo) is not None
 
-# --- CONFIGURACIÓN DE HORARIOS POR DIVISIÓN Y SUBDIVISIÓN ---
+# --- CONFIGURACIÓN DE HORARIOS Y RANGOS POR DIVISIÓN Y SUBDIVISIÓN ---
 HORARIOS_DIVISIONES = {
     "Valorant": {
         "División A": {"horario": "20:00 - 23:00 (Lun a Vie)", "rango": "Inmortal"},
@@ -199,12 +199,12 @@ with tab_formulario:
     with col_sel2:
         tipo_contacto = st.selectbox("📞 Método de Contacto Preferido", ["Discord", "Instagram", "Número Telefónico", "Correo Electrónico"])
 
-    # --- MOSTRAR HORARIOS SEGÚN LA DIVISIÓN SELECCIONADA ---
+    # --- MOSTRAR HORARIOS Y RANGOS SEGÚN LA DIVISIÓN SELECCIONADA ---
     if division in HORARIOS_DIVISIONES:
         sub_divs = HORARIOS_DIVISIONES[division]
         cols_horarios = st.columns(len(sub_divs))
         
-        for idx, (sub_nombre, horario_txt) in enumerate(sub_divs.items()):
+        for idx, (sub_nombre, info) in enumerate(sub_divs.items()):
             with cols_horarios[idx]:
                 st.markdown(f"""
                 <div style="
@@ -219,8 +219,11 @@ with tab_formulario:
                     <span style="color: #ff4655; font-size: 1.1rem; font-weight: bold; display: block; margin-bottom: 4px;">
                         ⏰ {sub_nombre}
                     </span>
-                    <span style="color: #f0f2f6; font-size: 0.95rem;">
-                        {horario_txt}
+                    <span style="color: #f0f2f6; font-size: 0.95rem; display: block; margin-bottom: 6px;">
+                        {info['horario']}
+                    </span>
+                    <span style="color: #ff4655; font-size: 0.85rem; font-weight: bold; display: block; letter-spacing: 0.5px;">
+                        RANGO MÍNIMO: <span style="color: #ffffff;">{info['rango']}</span>
                     </span>
                 </div>
                 """, unsafe_allow_html=True)
