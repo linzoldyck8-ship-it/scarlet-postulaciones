@@ -5,6 +5,33 @@ from streamlit_autorefresh import st_autorefresh
 import gspread
 from google.oauth2.service_account import Credentials
 
+# --- CONFIGURACIÓN DE HORARIOS POR DIVISIÓN Y SUBDIVISIÓN (FÁCILMENTE EDITABLE) ---
+HORARIOS_DIVISIONES = {
+    "Valorant": {
+        "División A": "20:00 - 23:00 (Lun a Vie)",
+        "División B": "18:00 - 21:00 (Lun a Vie)",
+        "División C": "16:00 - 19:00 (Sáb y Dom)"
+    },
+    "CS GO": {
+        "División A": "21:00 - 00:00 (Lun a Vie)",
+        "División B": "19:00 - 22:00 (Mar a Sáb)",
+        "División C": "17:00 - 20:00 (Fines de semana)"
+    },
+    "Overwatch": {
+        "División A": "20:00 - 23:00 (Mar, Jue, Sáb)",
+        "División B": "18:00 - 21:00 (Lun, Mié, Vie)",
+        "División C": "16:00 - 19:00 (Sáb y Dom)"
+    },
+    "Valorant Femenino": {
+        "División A": "19:00 - 22:00 (Lun a Jue)",
+        "División B": "17:00 - 20:00 (Vie a Dom)"
+    },
+    "Fighting": {
+        "División A": "20:00 - 22:00 (Mié y Vie)",
+        "División B": "18:00 - 20:00 (Sáb y Dom)"
+    }
+}
+
 # Configuración de la página
 st.set_page_config(
     page_title="Scarlet Esports - Reclutamiento",
@@ -12,7 +39,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- ESTILOS CSS AVANZADOS (PESTAÑAS ESTILO GAMING CON ROLES ARIA) ---
+# --- ESTILOS CSS AVANZADOS ---
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -85,9 +112,7 @@ st.markdown("""
         color: white;
     }
 
-    /* --- ESTILO GAMING PARA PESTAÑAS (BASADO EN ROLES ARIA) --- */
-    
-    /* Contenedor de la barra de pestañas */
+    /* --- ESTILO GAMING PARA PESTAÑAS --- */
     [role="tablist"] {
         background-color: rgba(18, 22, 31, 0.6) !important;
         gap: 10px !important;
@@ -96,7 +121,6 @@ st.markdown("""
         border: 1px solid rgba(255, 70, 85, 0.2) !important;
     }
 
-    /* Pestaña individual */
     [role="tab"] {
         background-color: transparent !important;
         border-radius: 6px !important;
@@ -105,14 +129,12 @@ st.markdown("""
         transition: all 0.3s ease-in-out !important;
     }
 
-    /* Texto de las pestañas */
     [role="tab"] p, [role="tab"] div {
         font-size: 1.15rem !important;
         font-weight: bold !important;
         color: #8b949e !important;
     }
 
-    /* Efecto Hover con Gradiente Escarlata */
     [role="tab"]:hover {
         background: linear-gradient(135deg, rgba(255, 70, 85, 0.2) 0%, rgba(255, 70, 85, 0.45) 100%) !important;
         border-color: rgba(255, 70, 85, 0.5) !important;
@@ -121,7 +143,6 @@ st.markdown("""
         color: #ffffff !important;
     }
 
-    /* Pestaña Activa / Seleccionada con Gradiente Escarlata Fuerte */
     [role="tab"][aria-selected="true"] {
         background: linear-gradient(135deg, rgba(255, 70, 85, 0.4) 0%, rgba(255, 70, 85, 0.8) 100%) !important;
         border-color: #ff4655 !important;
@@ -132,7 +153,6 @@ st.markdown("""
         text-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
     }
 
-    /* Ocultar la línea inferior por defecto de Streamlit */
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] {
         display: none !important;
     }
@@ -168,6 +188,32 @@ with tab_formulario:
 
     division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
 
+    # --- MOSTRAR HORARIOS SEGÚN LA DIVISIÓN SELECCIONADA ---
+    if division in HORARIOS_DIVISIONES:
+        sub_divs = HORARIOS_DIVISIONES[division]
+        cols_horarios = st.columns(len(sub_divs))
+        
+        for idx, (sub_nombre, horario_txt) in enumerate(sub_divs.items()):
+            with cols_horarios[idx]:
+                st.markdown(f"""
+                <div style="
+                    background: rgba(22, 27, 34, 0.85);
+                    border: 1px solid rgba(255, 70, 85, 0.4);
+                    border-radius: 8px;
+                    padding: 12px;
+                    text-align: center;
+                    box-shadow: 0 0 10px rgba(255, 70, 85, 0.15);
+                    margin-bottom: 20px;
+                ">
+                    <span style="color: #ff4655; font-size: 1.1rem; font-weight: bold; display: block; margin-bottom: 4px;">
+                        ⏰ {sub_nombre}
+                    </span>
+                    <span style="color: #f0f2f6; font-size: 0.95rem;">
+                        {horario_txt}
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
+
     with st.form("form_postulacion"):
         col_f1, col_f2 = st.columns(2)
         
@@ -202,7 +248,6 @@ with tab_formulario:
 
         with col_f2:
             baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
-            horario = st.selectbox("Horario Disponible", ["Mañana", "Tarde", "Noche", "Madrugada", "Flexible"])
             notas = st.text_input("Link de Tracker / VODs / Notas adicionales", autocomplete="off")
             
             st.markdown("<br><br>", unsafe_allow_html=True) 
@@ -231,13 +276,13 @@ with tab_formulario:
                         st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Usuario de Discord en esta división.")
                     else:
                         if division in ["Valorant", "Valorant Femenino"]:
-                            nueva_fila = [player_id, contacto_discord, str(edad), rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
+                            nueva_fila = [player_id, contacto_discord, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
                         elif division == "Overwatch":
-                            nueva_fila = [player_id, contacto_discord, str(edad), rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
+                            nueva_fila = [player_id, contacto_discord, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
                         elif division == "CS GO":
-                            nueva_fila = [player_id, contacto_discord, str(edad), rango_actual, rol, peak_elo, baneos, horario, "Tryout", notas]
+                            nueva_fila = [player_id, contacto_discord, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
                         elif division == "Fighting":
-                            nueva_fila = [player_id, contacto_discord, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, horario, "Tryout", notas]
+                            nueva_fila = [player_id, contacto_discord, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas]
                         
                         ws.append_row(nueva_fila)
                         st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
