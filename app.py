@@ -155,7 +155,6 @@ st.markdown("""
         font-size: 1.3rem !important;
     }
 
-    /* --- ESTILO Y TAMAÑO MAYOR PARA EL TEXTO DEL BOTÓN DE ENVÍO --- */
     div[data-testid="stFormSubmitButton"] button,
     button[kind="primaryFormSubmit"],
     button[data-testid="stBaseButton-primaryFormSubmit"] {
@@ -187,7 +186,6 @@ st.markdown("""
         color: white !important;
     }
 
-    /* --- ESTILO GAMING PARA PESTAÑAS --- */
     [role="tablist"] {
         background-color: rgba(18, 22, 31, 0.6) !important;
         gap: 10px !important;
@@ -261,14 +259,12 @@ with tab_formulario:
     st.title("📝 Formulario de Postulación - Scarlet Esports")
     st.markdown("Selecciona la división y tu método de contacto preferido para completar tus datos.")
 
-    # --- CONTROLES INTERACTIVOS ---
     col_sel1, col_sel2 = st.columns(2)
     with col_sel1:
         division = st.selectbox("🎮 Selecciona la División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
     with col_sel2:
         tipo_contacto = st.selectbox("📞 Método de Contacto Preferido", ["Discord", "Instagram", "Número Telefónico", "Correo Electrónico"])
 
-    # --- MOSTRAR HORARIOS Y RANGOS SEGÚN LA DIVISIÓN SELECCIONADA ---
     if division in HORARIOS_DIVISIONES:
         sub_divs = HORARIOS_DIVISIONES[division]
         cols_horarios = st.columns(len(sub_divs))
@@ -397,14 +393,36 @@ with tab_formulario:
 
 # --- APARTADO DASHBOARD ---
 with tab_dashboard:
-    st.subheader("🔒 Acceso Restringido")
-    clave_acceso = st.text_input("Ingrese la clave para ver el panel gerencial", type="password")
-    
-    if clave_acceso == "cazuela":
+    # Inicialización del estado de autenticación en la sesión del navegador
+    if "autenticado" not in st.session_state:
+        st.session_state["autenticado"] = False
+
+    # SI NO ESTÁ AUTENTICADO: MOSTRAR FORMULARIO DE ACCESO
+    if not st.session_state["autenticado"]:
+        st.subheader("🔒 Acceso Restringido")
+        with st.form("login_gerencia"):
+            clave_acceso = st.text_input("Ingrese la clave para ver el panel gerencial", type="password")
+            btn_login = st.form_submit_button("🔓 Iniciar Sesión")
+            
+            if btn_login:
+                if clave_acceso == "cazuela":
+                    st.session_state["autenticado"] = True
+                    st.success("✅ Acceso concedido.")
+                    st.rerun()
+                else:
+                    st.error("❌ Contraseña incorrecta. Acceso denegado.")
+                    
+    # SI YA ESTÁ AUTENTICADO: MOSTRAR EL PANEL COMPLETO
+    else:
         count = st_autorefresh(interval=10000, limit=None, key="scarlet_autorefresh")
 
         st.title("🔥 PANEL GERENCIAL SCARLET ESPORTS")
         
+        # Botón para cerrar sesión en la barra lateral
+        if st.sidebar.button("🚪 Cerrar Sesión Admin"):
+            st.session_state["autenticado"] = False
+            st.rerun()
+
         div_dashboard = st.sidebar.selectbox("📊 Analizar División", ["Valorant", "Overwatch", "CS GO", "Valorant Femenino", "Fighting"])
         st.markdown(f"### Mostrando métricas de: **{div_dashboard}**")
 
@@ -439,7 +457,6 @@ with tab_dashboard:
                 col_contact_name = df.columns[1] if len(df.columns) > 1 else col_id_name
                 tipo_id_actual = ETIQUETAS_ID.get(div_dashboard, "ID Jugador")
                 
-                # Menú desplegable etiquetando explícitamente el Riot ID / BattleTag / Steam ID
                 opciones_postulantes = {}
                 for idx, row in df.iterrows():
                     val_id = row[col_id_name]
@@ -544,6 +561,3 @@ with tab_dashboard:
 
             st.subheader("📋 Registro Detallado")
             st.dataframe(df, use_container_width=True)
-            
-    elif clave_acceso:
-        st.error("❌ Contraseña incorrecta. Acceso denegado.")
