@@ -84,6 +84,54 @@ st.markdown("""
         box-shadow: 0 0 18px rgba(255, 70, 85, 0.8);
         color: white;
     }
+
+    /* --- ESTILO ESTÉTICO PARA LAS PESTAÑAS (TABS) --- */
+    /* Contenedor general de las pestañas */
+    div[data-baseweb="tab-list"] {
+        gap: 15px;
+        background-color: rgba(18, 22, 31, 0.6);
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 70, 85, 0.2);
+    }
+    /* Estilo de cada pestaña individual */
+    div[data-baseweb="tab"] {
+        height: 50px;
+        background-color: rgba(22, 27, 34, 0.9);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 70, 85, 0.3);
+        padding: 0 25px;
+        transition: all 0.3s ease;
+    }
+    /* Texto dentro de las pestañas */
+    div[data-baseweb="tab"] p {
+        font-size: 1.2rem !important;
+        font-weight: bold !important;
+        color: #8b949e !important;
+    }
+    /* Efecto al pasar el cursor (Hover) */
+    div[data-baseweb="tab"]:hover {
+        background-color: rgba(255, 70, 85, 0.15);
+        border-color: #ff4655;
+        box-shadow: 0 0 12px rgba(255, 70, 85, 0.4);
+    }
+    div[data-baseweb="tab"]:hover p {
+        color: #ffffff !important;
+    }
+    /* Pestaña seleccionada (Activa) */
+    div[data-baseweb="tab"][aria-selected="true"] {
+        background-color: #ff4655 !important;
+        border-color: #ff6b78 !important;
+        box-shadow: 0 0 18px rgba(255, 70, 85, 0.8);
+    }
+    div[data-baseweb="tab"][aria-selected="true"] p {
+        color: #ffffff !important;
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    }
+    /* Ocultar la línea inferior por defecto de Streamlit */
+    div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {
+        display: none !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
