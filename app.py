@@ -30,7 +30,7 @@ RANGOS_OVERWATCH = [
     "Diamante 5", "Diamante 4", "Diamante 3", "Diamante 2", "Diamante 1",
     "Maestro 5", "Maestro 4", "Maestro 3", "Maestro 2", "Maestro 1",
     "Gran Maestro 5", "Gran Maestro 4", "Gran Maestro 3", "Gran Maestro 2", "Gran Maestro 1",
-    "TOP 500"
+    "Champion"
 ]
 
 ETIQUETAS_ID = {
