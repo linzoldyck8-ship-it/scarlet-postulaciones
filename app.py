@@ -528,9 +528,9 @@ with tab_dashboard:
     else:
         count = st_autorefresh(interval=2000, limit=None, key="scarlet_autorefresh")
 
-        st.title("🔥 PANEL GERENCIAL SCARLET ESPORTS")
+        st.title("🛠️ PANEL GERENCIAL SCARLET ESPORTS")
         
-        if st.sidebar.button("🚪 Cerrar Sesión Admin"):
+        if st.sidebar.button("🔌 Cerrar Sesión Admin"):
             st.session_state["autenticado"] = False
             st.rerun()
 
