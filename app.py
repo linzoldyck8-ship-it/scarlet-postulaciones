@@ -53,8 +53,8 @@ HORARIOS_DIVISIONES = {
         "División A": {"horario": "22:00 - 01:00 (Lun a Vie)", "rango": "Nivel 5 Faceit/ 10 GC"},
     },
     "Overwatch": {
-        "División A": {"horario": "20:00 - 23:00 (Mar, Jue, Sáb)", "rango": "Gran Maestro"},
-        "División B": {"horario": "18:00 - 21:00 (Lun, Mié, Vie)", "rango": "Maestro"},
+        "División A": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "indefinido"},
+        "División B": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "indefinido"},
     },
     "Valorant Femenino": {
         "División A": {"horario": "21:00 - 23:00 (Lun a Vie)", "rango": "Ascendente"},
