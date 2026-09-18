@@ -406,7 +406,7 @@ with tab_formulario:
                 elif division == "CS":
                     player_id = st.text_input("Steam ID o Link de Perfil")
                     rol = st.selectbox("Rol", ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Rifler"])
-                    rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k, FACEIT Lvl 10)")
+                    rango_actual = st.text_input("Rango FACEIT / GC ")
                     peak_elo = st.text_input("Peak Elo / Max Rating")
                     
                 elif division == "Fighting":
