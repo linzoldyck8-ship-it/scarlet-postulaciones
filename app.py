@@ -252,12 +252,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- CONEXIÓN A SUPABASE ---
+# --- CONEXIÓN A SUPABASE (MODIFICADO CON .strip() PARA EVITAR EL ERROR DE RED) ---
 @st.cache_resource
 def init_supabase() -> Client:
     try:
-        url = st.secrets["supabase"]["url"]
-        key = st.secrets["supabase"]["key"]
+        url = st.secrets["supabase"]["url"].strip()
+        key = st.secrets["supabase"]["key"].strip()
         return create_client(url, key)
     except Exception as e:
         st.sidebar.error(f"❌ Error conectando a Supabase: {e}")
@@ -432,7 +432,7 @@ with tab_formulario:
                         if duplicado:
                             st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Contacto en esta división.")
                         else:
-                            # Construir diccionario de datos a insertar (asegúrate de que las columnas en Supabase coincidan con estos nombres)
+                            # Construir diccionario de datos a insertar
                             if division in ["Valorant", "Valorant Femenino", "Overwatch", "CS"]:
                                 nueva_data = {
                                     "player_id": player_id,
@@ -550,7 +550,7 @@ with tab_dashboard:
                 
                 opciones_postulantes_bl = {}
                 for idx, row in df.iterrows():
-                    row_id = row.get("id", idx) # ID de Supabase si existe
+                    row_id = row.get("id", idx)
                     val_id = row.get(col_id_name, "")
                     val_contacto = row.get(col_contact_name, "")
                     etiqueta = f"🎮 {tipo_id_actual}: {val_id} ({val_contacto})"
@@ -566,7 +566,6 @@ with tab_dashboard:
                             row_id_db, val_id, val_contacto = opciones_postulantes_bl[postulante_bl_sel]
                             fecha_hoy = datetime.date.today().strftime("%Y-%m-%d")
                             
-                            # Insertar en lista_negra
                             supabase.table("lista_negra").insert({
                                 "id_jugador": val_id,
                                 "contacto": val_contacto,
@@ -575,7 +574,6 @@ with tab_dashboard:
                                 "division_origen": div_dashboard
                             }).execute()
                             
-                            # Borrar de la tabla de la división
                             supabase.table(tabla_dashboard).delete().eq("id", row_id_db).execute()
                             
                             st.cache_data.clear()
@@ -659,7 +657,6 @@ with tab_dashboard:
             if st.button(f"🗑️ Limpiar DB de {div_dashboard}", type="primary"):
                 if pwd_confirm == admin_password:
                     try:
-                        # En Supabase borramos todas las filas donde id no sea nulo (o mayor que 0 si id es autoincremental)
                         supabase.table(tabla_dashboard).delete().neq("id", 0).execute()
                         st.cache_data.clear()
                         
@@ -743,7 +740,6 @@ with tab_dashboard:
                             st.plotly_chart(fig_roles, use_container_width=True)
 
                 st.subheader("📋 Registro Detallado")
-                # Ocultar la columna 'id' interna de Supabase para mayor prolijidad visual si existe
                 df_display = df.drop(columns=['id']) if 'id' in df.columns else df
                 st.dataframe(df_display, use_container_width=True)
 
