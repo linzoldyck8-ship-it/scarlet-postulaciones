@@ -29,7 +29,7 @@ RANGOS_OVERWATCH = [
     "Diamante 5", "Diamante 4", "Diamante 3", "Diamante 2", "Diamante 1",
     "Maestro 5", "Maestro 4", "Maestro 3", "Maestro 2", "Maestro 1",
     "Gran Maestro 5", "Gran Maestro 4", "Gran Maestro 3", "Gran Maestro 2", "Gran Maestro 1",
-    "TOP 500"
+    "Champion"
 ]
 
 ETIQUETAS_ID = {
@@ -48,15 +48,13 @@ HORARIOS_DIVISIONES = {
     "Valorant": {
         "División A": {"horario": "20:00 - 23:00 (Lun a Vie)", "rango": "Inmortal"},
         "División B": {"horario": "21:00 - 23:00 (Lun a Vie)", "rango": "plata"},
-        "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "CS": {
         "División A": {"horario": "22:00 - 01:00 (Lun a Vie)", "rango": "Nivel 5 Faceit/ 10 GC"},
     },
     "Overwatch": {
-        "División A": {"horario": "20:00 - 23:00 (Mar, Jue, Sáb)", "rango": "Gran Maestro"},
-        "División B": {"horario": "18:00 - 21:00 (Lun, Mié, Vie)", "rango": "Maestro"},
-        "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
+        "División A": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "Gran Maestro"},
+        "División B": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "Maestro"},
     },
     "Valorant Femenino": {
         "División A": {"horario": "21:00 - 23:00 (Lun a Vie)", "rango": "Ascendente"},
