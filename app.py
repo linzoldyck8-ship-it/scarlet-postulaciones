@@ -30,7 +30,7 @@ RANGOS_OVERWATCH = [
     "Diamante 5", "Diamante 4", "Diamante 3", "Diamante 2", "Diamante 1",
     "Maestro 5", "Maestro 4", "Maestro 3", "Maestro 2", "Maestro 1",
     "Gran Maestro 5", "Gran Maestro 4", "Gran Maestro 3", "Gran Maestro 2", "Gran Maestro 1",
-    "Champion"
+    "TOP 500"
 ]
 
 ETIQUETAS_ID = {
@@ -449,13 +449,13 @@ with tab_formulario:
                             st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Contacto en esta división.")
                         else:
                             if division in ["Valorant", "Valorant Femenino"]:
-                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas, ""]
                             elif division == "Overwatch":
-                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas, ""]
                             elif division == "CS":
-                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas, ""]
                             elif division == "Fighting":
-                                nueva_fila = [player_id, contacto_formateado, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas]
+                                nueva_fila = [player_id, contacto_formateado, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas, ""]
                             
                             ws.append_row(nueva_fila)
                             st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
@@ -759,8 +759,30 @@ with tab_dashboard:
                             fig_roles.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#f0f2f6', showlegend=False)
                             st.plotly_chart(fig_roles, use_container_width=True)
 
-                st.subheader("📋 Registro Detallado")
-                st.dataframe(df, use_container_width=True)
+                st.markdown("---")
+                st.subheader("📋 Registros Detallados por Estado")
+                
+                df_aceptados_tab = df[df[col_estado].astype(str).str.strip().str.lower() == 'aceptado']
+                df_tryouts_tab = df[df[col_estado].astype(str).str.strip().str.lower() == 'tryout']
+                df_rechazados_tab = df[df[col_estado].astype(str).str.strip().str.lower() == 'rechazado']
+                
+                st.markdown("#### 🟢 Plantel Aceptado")
+                if not df_aceptados_tab.empty:
+                    st.dataframe(df_aceptados_tab, use_container_width=True)
+                else:
+                    st.info("No hay postulantes aceptados actualmente.")
+                    
+                st.markdown("#### 🟡 Jugadores en Tryouts")
+                if not df_tryouts_tab.empty:
+                    st.dataframe(df_tryouts_tab, use_container_width=True)
+                else:
+                    st.info("No hay postulantes en fase de pruebas.")
+                    
+                st.markdown("#### 🔴 Postulantes Rechazados")
+                if not df_rechazados_tab.empty:
+                    st.dataframe(df_rechazados_tab, use_container_width=True)
+                else:
+                    st.info("No hay postulantes rechazados.")
 
             st.markdown("---")
             with st.expander(f"👀 Ver Jugadores Vetados en {div_dashboard} (Lista Negra)"):
@@ -781,13 +803,18 @@ with tab_dashboard:
 
         with subtab_estado:
             st.subheader(f"📝 Modificar Estado en {div_dashboard}")
-            st.markdown("Busca y edita el estado de los postulantes directamente en la tabla interactiva y haz clic en **Guardar Cambios**.")
+            st.markdown("Busca y edita el estado de los postulantes. Si pasas a un jugador a 'Rechazado', puedes especificar el motivo.")
             
             if not df.empty:
                 col_estado_mod = next((c for c in df.columns if 'estado' in c.lower()), None)
                 if not col_estado_mod:
                     df['Estado'] = 'Tryout'
                     col_estado_mod = 'Estado'
+                
+                col_motivo = next((c for c in df.columns if 'motivo' in c.lower()), None)
+                if not col_motivo:
+                    df['Motivo Rechazo'] = ''
+                    col_motivo = 'Motivo Rechazo'
                 
                 df[col_estado_mod] = df[col_estado_mod].astype(str).str.capitalize()
                 
@@ -797,10 +824,14 @@ with tab_dashboard:
                         help="Selecciona el nuevo estado del postulante",
                         options=["Tryout", "Aceptado", "Rechazado"],
                         required=True,
+                    ),
+                    col_motivo: st.column_config.TextColumn(
+                        "Motivo de Rechazo",
+                        help="Especifica la razón de rechazo (si aplica)",
                     )
                 }
                 
-                disabled_cols = [c for c in df.columns if c != col_estado_mod]
+                disabled_cols = [c for c in df.columns if c not in [col_estado_mod, col_motivo]]
                 
                 edited_df = st.data_editor(
                     df,
@@ -811,27 +842,50 @@ with tab_dashboard:
                     hide_index=True
                 )
                 
-                if st.button("💾 Guardar Cambios de Estado", use_container_width=True):
+                if st.button("💾 Guardar Cambios", use_container_width=True):
                     try:
                         ws_estado = workbook.worksheet(div_dashboard)
-                        col_idx = df.columns.tolist().index(col_estado_mod) + 1
+                        headers = ws_estado.row_values(1)
+                        
+                        if col_estado_mod not in headers:
+                            col_idx_estado = len(headers) + 1
+                            ws_estado.update_cell(1, col_idx_estado, col_estado_mod)
+                            headers.append(col_estado_mod)
+                        else:
+                            col_idx_estado = headers.index(col_estado_mod) + 1
+                            
+                        if col_motivo not in headers:
+                            col_idx_motivo = len(headers) + 1
+                            ws_estado.update_cell(1, col_idx_motivo, col_motivo)
+                            headers.append(col_motivo)
+                        else:
+                            col_idx_motivo = headers.index(col_motivo) + 1
                         
                         cambios_realizados = 0
+                        
                         for idx in range(len(df)):
-                            val_original = str(df.iloc[idx][col_estado_mod]).strip()
-                            val_nuevo = str(edited_df.iloc[idx][col_estado_mod]).strip()
+                            val_est_original = str(df.iloc[idx].get(col_estado_mod, "")).strip()
+                            val_est_nuevo = str(edited_df.iloc[idx].get(col_estado_mod, "")).strip()
                             
-                            if val_original != val_nuevo:
-                                fila_excel = idx + 2
-                                ws_estado.update_cell(fila_excel, col_idx, val_nuevo)
+                            val_mot_original = str(df.iloc[idx].get(col_motivo, "")).strip()
+                            val_mot_nuevo = str(edited_df.iloc[idx].get(col_motivo, "")).strip()
+                            
+                            fila_excel = idx + 2
+                            
+                            if val_est_original != val_est_nuevo:
+                                ws_estado.update_cell(fila_excel, col_idx_estado, val_est_nuevo)
+                                cambios_realizados += 1
+                                
+                            if val_mot_original != val_mot_nuevo:
+                                ws_estado.update_cell(fila_excel, col_idx_motivo, val_mot_nuevo)
                                 cambios_realizados += 1
                         
                         st.cache_data.clear()
                         if cambios_realizados > 0:
-                            st.success(f"✅ Se actualizaron {cambios_realizados} estados correctamente en Google Sheets.")
+                            st.success(f"✅ Se actualizaron datos y motivos en Google Sheets.")
                             st.rerun()
                         else:
-                            st.info("ℹ️ No se detectaron cambios en los estados.")
+                            st.info("ℹ️ No se detectaron cambios en la tabla interactiva.")
                     except Exception as e:
                         st.error(f"❌ Error al guardar los cambios: {e}")
             else:
