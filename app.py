@@ -3,7 +3,8 @@ import streamlit.components.v1 as components
 import pandas as pd
 import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
-from supabase import create_client, Client
+import gspread
+from google.oauth2.service_account import Credentials
 import re
 import datetime
 
@@ -252,44 +253,62 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- CONEXIÓN A SUPABASE (MODIFICADO CON .strip() PARA EVITAR EL ERROR DE RED) ---
-@st.cache_resource
-def init_supabase() -> Client:
+SHEET_ID = "1a-D3wfr9XBwFIE34wAY-9-16eB3ABHndPsxq_6dbWqE"
+scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+@st.cache_resource(ttl=60)
+def conectar_gsheets():
     try:
-        url = st.secrets["supabase"]["url"].strip()
-        key = st.secrets["supabase"]["key"].strip()
-        return create_client(url, key)
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        if "private_key" in creds_dict:
+            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        client = gspread.authorize(creds)
+        workbook = client.open_by_key(SHEET_ID)
+        return workbook
     except Exception as e:
-        st.sidebar.error(f"❌ Error conectando a Supabase: {e}")
+        st.sidebar.error(f"❌ Error de conexión: {e}")
         return None
 
-supabase = init_supabase()
-
-# Normaliza el nombre de la división para usarlo como tabla en Supabase (ej: "Valorant Femenino" -> "valorant_femenino")
-def limpiar_nombre_tabla(nombre):
-    return nombre.lower().replace(" ", "_")
+workbook = conectar_gsheets()
 
 @st.cache_data(ttl=10)
 def obtener_password_admin():
-    if not supabase:
+    if not workbook:
         return "cazuela"
     try:
-        response = supabase.table("configuracion").select("valor").eq("clave", "Password").execute()
-        if response.data and len(response.data) > 0:
-            val = response.data[0]["valor"]
-            return val.strip() if val and val.strip() != "" else "cazuela"
-        else:
+        ws = workbook.worksheet("Configuracion")
+        val = ws.acell("A2").value
+        return val.strip() if val and val.strip() != "" else "cazuela"
+    except gspread.exceptions.WorksheetNotFound:
+        try:
+            ws = workbook.add_worksheet(title="Configuracion", rows="10", cols="2")
+            ws.update_acell("A1", "Password")
+            ws.update_acell("A2", "cazuela")
+            return "cazuela"
+        except Exception:
             return "cazuela"
     except Exception:
         return "cazuela"
 
 def actualizar_password_admin(nueva_clave):
     try:
-        supabase.table("configuracion").update({"valor": nueva_clave}).eq("clave", "Password").execute()
+        ws = workbook.worksheet("Configuracion")
+        ws.update_acell("A2", nueva_clave)
         st.cache_data.clear()
         return True
     except Exception:
         return False
+
+def obtener_hoja_lista_negra(wb):
+    try:
+        return wb.worksheet("Lista Negra")
+    except gspread.exceptions.WorksheetNotFound:
+        ws = wb.add_worksheet(title="Lista Negra", rows="1000", cols="5")
+        ws.append_row(["ID_Jugador", "Contacto", "Fecha_Vetado", "Motivo", "División_Origen"])
+        return ws
+    except Exception:
+        return None
 
 tab_formulario, tab_dashboard = st.tabs(["📝 Postularme al Roster", "📊 Panel Gerencial (Dashboard)"])
 
@@ -393,73 +412,52 @@ with tab_formulario:
                 st.error("⚠️ Por favor ingresa un correo electrónico válido (Ejemplo: usuario@dominio.com).")
             elif edad < 14:
                 st.error("⚠️ Debes tener al menos 14 años para postularte a Scarlet Esports.")
-            elif not supabase:
-                st.error("⚠️ Error de conexión con Supabase.")
+            elif not workbook:
+                st.error("⚠️ Error de conexión con Google Sheets.")
             else:
                 try:
-                    tabla_nombre = limpiar_nombre_tabla(division)
-                    
-                    # Verificar lista negra en Supabase
-                    res_bl = supabase.table("lista_negra").select("*").execute()
-                    registros_bl = res_bl.data if res_bl.data else []
+                    ws_bl = obtener_hoja_lista_negra(workbook)
+                    registros_bl = ws_bl.get_all_values() if ws_bl else []
                     esta_vetado = False
                     
-                    for fila_bl in registros_bl:
-                        id_vetado = str(fila_bl.get("id_jugador", "")).strip().lower()
-                        contacto_vetado = str(fila_bl.get("contacto", "")).strip().lower()
-                        
-                        if (id_vetado and id_vetado == player_id.strip().lower()) or \
-                           (contacto_vetado and (contacto_vetado == contacto_formateado.lower() or contacto_vetado == contacto_valor.strip().lower())):
-                            esta_vetado = True
-                            break
+                    for fila_bl in registros_bl[1:]:
+                        if len(fila_bl) > 1:
+                            id_vetado = fila_bl[0].strip().lower()
+                            contacto_vetado = fila_bl[1].strip().lower()
+                            
+                            if (id_vetado and id_vetado == player_id.strip().lower()) or \
+                               (contacto_vetado and (contacto_vetado == contacto_formateado.lower() or contacto_vetado == contacto_valor.strip().lower())):
+                                esta_vetado = True
+                                break
                     
                     if esta_vetado:
                         st.error("❌ Tu postulación ha sido rechazada automáticamente. No cumples con los requisitos de ingreso para Scarlet Esports.")
                     else:
-                        # Verificar duplicados en la tabla de la división
-                        res_existentes = supabase.table(tabla_nombre).select("*").execute()
-                        registros_existentes = res_existentes.data if res_existentes.data else []
+                        ws = workbook.worksheet(division)
+                        registros_existentes = ws.get_all_values()
                         duplicado = False
-                        
-                        for fila in registros_existentes:
-                            p_id = str(fila.get("player_id", fila.get("id_jugador", ""))).strip().lower()
-                            p_cont = str(fila.get("contacto", "")).strip().lower()
-                            
-                            if p_id == player_id.strip().lower() or p_cont == contacto_formateado.lower() or p_cont == contacto_valor.strip().lower():
+                        for fila in registros_existentes[1:]:
+                            if len(fila) > 1 and (
+                                fila[0].strip().lower() == player_id.strip().lower() or 
+                                fila[1].strip().lower() == contacto_formateado.lower() or
+                                fila[1].strip().lower() == contacto_valor.strip().lower()
+                            ):
                                 duplicado = True
                                 break
                         
                         if duplicado:
                             st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Contacto en esta división.")
                         else:
-                            # Construir diccionario de datos a insertar
-                            if division in ["Valorant", "Valorant Femenino", "Overwatch", "CS"]:
-                                nueva_data = {
-                                    "player_id": player_id,
-                                    "contacto": contacto_formateado,
-                                    "edad": str(edad),
-                                    "rango_actual": rango_actual,
-                                    "rol": rol,
-                                    "peak_elo": peak_elo,
-                                    "baneos": baneos,
-                                    "estado": "Tryout",
-                                    "notas": notas
-                                }
+                            if division in ["Valorant", "Valorant Femenino"]:
+                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                            elif division == "Overwatch":
+                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
+                            elif division == "CS":
+                                nueva_fila = [player_id, contacto_formateado, str(edad), rango_actual, rol, peak_elo, baneos, "Tryout", notas]
                             elif division == "Fighting":
-                                nueva_data = {
-                                    "player_id": player_id,
-                                    "contacto": contacto_formateado,
-                                    "edad": str(edad),
-                                    "juego_especifico": juego_esp,
-                                    "personaje": personaje,
-                                    "rango_actual": rango_actual,
-                                    "peak_elo": peak_elo,
-                                    "baneos": baneos,
-                                    "estado": "Tryout",
-                                    "notas": notas
-                                }
+                                nueva_fila = [player_id, contacto_formateado, str(edad), juego_esp, personaje, rango_actual, peak_elo, baneos, "Tryout", notas]
                             
-                            supabase.table(tabla_nombre).insert(nueva_data).execute()
+                            ws.append_row(nueva_fila)
                             st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
                             
                 except Exception as e:
@@ -468,6 +466,15 @@ with tab_formulario:
 with tab_dashboard:
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
+
+    if "del_count" not in st.session_state:
+        st.session_state["del_count"] = 0
+    if "wipe_count" not in st.session_state:
+        st.session_state["wipe_count"] = 0
+    if "bl_count" not in st.session_state:
+        st.session_state["bl_count"] = 0
+    if "unbl_count" not in st.session_state:
+        st.session_state["unbl_count"] = 0
 
     admin_password = obtener_password_admin()
 
@@ -495,7 +502,6 @@ with tab_dashboard:
             st.rerun()
 
         div_dashboard = st.sidebar.selectbox("📊 Analizar División", ["Valorant", "Overwatch", "CS", "Valorant Femenino", "Fighting"])
-        tabla_dashboard = limpiar_nombre_tabla(div_dashboard)
         st.markdown(f"### Mostrando métricas de: **{div_dashboard}**")
 
         st.sidebar.markdown("## ⚙️ Panel de Control")
@@ -506,19 +512,21 @@ with tab_dashboard:
         st.sidebar.markdown("---")
 
         @st.cache_data(ttl=5)
-        def load_data_from_supabase(table_name):
+        def load_data_from_sheet(sheet_name):
             try:
-                res = supabase.table(table_name).select("*").execute()
-                data = res.data
-                if data and len(data) > 0:
-                    df = pd.DataFrame(data)
+                ws = workbook.worksheet(sheet_name)
+                data = ws.get_all_values()
+                if len(data) > 1:
+                    headers = data[0]
+                    headers = [h if h.strip() != "" else f"Col_Extra_{i}" for i, h in enumerate(headers)]
+                    df = pd.DataFrame(data[1:], columns=headers)
                     return df
                 else:
-                    return pd.DataFrame()
+                    return pd.DataFrame(columns=data[0] if data else [])
             except Exception:
                 return pd.DataFrame()
 
-        df = load_data_from_supabase(tabla_dashboard)
+        df = load_data_from_sheet(div_dashboard)
 
         with st.sidebar.expander("🔑 Cambiar Contraseña Gerencial"):
             with st.form("form_cambio_pass", clear_on_submit=True):
@@ -540,43 +548,42 @@ with tab_dashboard:
                             st.success("✅ ¡Contraseña actualizada exitosamente!")
                             admin_password = pwd_nueva.strip() 
                         else:
-                            st.error("❌ Error al guardar la nueva contraseña en Supabase.")
+                            st.error("❌ Error al guardar la nueva contraseña en Google Sheets.")
 
         with st.sidebar.expander("🚫 Vetar / Mover a Lista Negra"):
             if not df.empty:
-                col_id_name = "player_id" if "player_id" in df.columns else df.columns[0]
-                col_contact_name = "contacto" if "contacto" in df.columns else (df.columns[1] if len(df.columns) > 1 else col_id_name)
+                col_id_name = df.columns[0]
+                col_contact_name = df.columns[1] if len(df.columns) > 1 else col_id_name
                 tipo_id_actual = ETIQUETAS_ID.get(div_dashboard, "ID Jugador")
                 
                 opciones_postulantes_bl = {}
                 for idx, row in df.iterrows():
-                    row_id = row.get("id", idx)
-                    val_id = row.get(col_id_name, "")
-                    val_contacto = row.get(col_contact_name, "")
+                    val_id = row[col_id_name]
+                    val_contacto = row[col_contact_name]
                     etiqueta = f"🎮 {tipo_id_actual}: {val_id} ({val_contacto})"
-                    opciones_postulantes_bl[etiqueta] = (row_id, val_id, val_contacto)
+                    opciones_postulantes_bl[etiqueta] = (idx + 2, val_id, val_contacto)
                 
                 postulante_bl_sel = st.selectbox("Selecciona al postulante a vetar", list(opciones_postulantes_bl.keys()), key="sb_vetar")
                 motivo_bl = st.text_input("Motivo del veto (Opcional):", placeholder="Ej: Comportamiento tóxico / Incumplimiento")
-                pwd_bl = st.text_input("Confirma contraseña gerencial:", type="password", key="pwd_bl_input")
+                
+                key_bl = f"pwd_bl_{st.session_state['bl_count']}"
+                pwd_bl = st.text_input("Confirma contraseña gerencial:", type="password", key=key_bl)
                 
                 if st.button("🚫 Vetar y Enviar a Lista Negra"):
                     if pwd_bl == admin_password:
                         try:
-                            row_id_db, val_id, val_contacto = opciones_postulantes_bl[postulante_bl_sel]
+                            fila_a_borrar, val_id, val_contacto = opciones_postulantes_bl[postulante_bl_sel]
+                            
+                            ws_bl = obtener_hoja_lista_negra(workbook)
                             fecha_hoy = datetime.date.today().strftime("%Y-%m-%d")
+                            ws_bl.append_row([val_id, val_contacto, fecha_hoy, motivo_bl if motivo_bl.strip() else "Sin motivo especificado", div_dashboard])
                             
-                            supabase.table("lista_negra").insert({
-                                "id_jugador": val_id,
-                                "contacto": val_contacto,
-                                "fecha_vetado": fecha_hoy,
-                                "motivo": motivo_bl if motivo_bl.strip() else "Sin motivo especificado",
-                                "division_origen": div_dashboard
-                            }).execute()
-                            
-                            supabase.table(tabla_dashboard).delete().eq("id", row_id_db).execute()
+                            ws_del = workbook.worksheet(div_dashboard)
+                            ws_del.delete_rows(fila_a_borrar)
                             
                             st.cache_data.clear()
+                            st.session_state["bl_count"] += 1
+                            
                             st.sidebar.success(f"✅ Postulante vetado con éxito y añadido a la Lista Negra.")
                             st.rerun()
                         except Exception as e:
@@ -587,28 +594,32 @@ with tab_dashboard:
                 st.info("No hay postulantes registrados en esta división.")
 
         with st.sidebar.expander("🟢 Desvetar / Quitar de Lista Negra"):
-            df_bl_data = load_data_from_supabase("lista_negra")
+            df_bl_data = load_data_from_sheet("Lista Negra")
             if not df_bl_data.empty:
                 opciones_desvetar = {}
                 for idx, row in df_bl_data.iterrows():
-                    row_id = row.get("id")
-                    val_id = row.get("id_jugador", "")
-                    val_contacto = row.get("contacto", "")
-                    div_orig = row.get("division_origen", "Desconocida")
+                    val_id = row[df_bl_data.columns[0]]
+                    val_contacto = row[df_bl_data.columns[1]] if len(df_bl_data.columns) > 1 else ""
+                    div_orig = row[df_bl_data.columns[4]] if len(df_bl_data.columns) > 4 else "Desconocida"
                     etiqueta = f"🎮 {val_id} ({val_contacto}) - [{div_orig}]"
-                    opciones_desvetar[etiqueta] = row_id
+                    opciones_desvetar[etiqueta] = idx + 2
                 
                 player_to_unvet = st.selectbox("Selecciona jugador a desvetar", list(opciones_desvetar.keys()), key="sb_desvetar")
-                pwd_unbl = st.text_input("Confirma contraseña gerencial para desvetar:", type="password", key="pwd_unbl_input")
+                
+                key_unbl = f"pwd_unbl_{st.session_state['unbl_count']}"
+                pwd_unbl = st.text_input("Confirma contraseña gerencial para desvetar:", type="password", key=key_unbl)
                 
                 if st.button("🟢 Desvetar y Permitir Postulaciones"):
                     if pwd_unbl == admin_password:
                         try:
-                            row_id_bl = opciones_desvetar[player_to_unvet]
-                            supabase.table("lista_negra").delete().eq("id", row_id_bl).execute()
+                            fila_a_borrar_bl = opciones_desvetar[player_to_unvet]
+                            ws_bl_del = obtener_hoja_lista_negra(workbook)
+                            ws_bl_del.delete_rows(fila_a_borrar_bl)
                             
                             st.cache_data.clear()
-                            st.sidebar.success("✅ Jugador retirado de la Lista Negra con éxito.")
+                            st.session_state["unbl_count"] += 1
+                            
+                            st.sidebar.success("✅ Jugador retirado de la Lista Negra con éxito. Ahora puede volver a postularse.")
                             st.rerun()
                         except Exception as e:
                             st.sidebar.error(f"❌ Error al desvetar jugador: {e}")
@@ -619,28 +630,31 @@ with tab_dashboard:
 
         with st.sidebar.expander("👤 Borrar Postulante (Sin Vetar)"):
             if not df.empty:
-                col_id_name = "player_id" if "player_id" in df.columns else df.columns[0]
-                col_contact_name = "contacto" if "contacto" in df.columns else (df.columns[1] if len(df.columns) > 1 else col_id_name)
+                col_id_name = df.columns[0]
+                col_contact_name = df.columns[1] if len(df.columns) > 1 else col_id_name
                 tipo_id_actual = ETIQUETAS_ID.get(div_dashboard, "ID Jugador")
                 
                 opciones_postulantes = {}
                 for idx, row in df.iterrows():
-                    row_id = row.get("id")
-                    val_id = row.get(col_id_name, "")
-                    val_contacto = row.get(col_contact_name, "")
+                    val_id = row[col_id_name]
+                    val_contacto = row[col_contact_name]
                     etiqueta = f"🎮 {tipo_id_actual}: {val_id} ({val_contacto})"
-                    opciones_postulantes[etiqueta] = row_id
+                    opciones_postulantes[etiqueta] = idx + 2
                 
                 postulante_sel = st.selectbox("Selecciona al postulante a eliminar", list(opciones_postulantes.keys()))
-                pwd_del_indiv = st.text_input("Confirma contraseña para eliminar:", type="password", key="pwd_del_input")
+                
+                key_del = f"pwd_del_indiv_{st.session_state['del_count']}"
+                pwd_del_indiv = st.text_input("Confirma contraseña para eliminar:", type="password", key=key_del)
                 
                 if st.button("❌ Eliminar Postulante Seleccionado"):
                     if pwd_del_indiv == admin_password:
                         try:
-                            row_id = opciones_postulantes[postulante_sel]
-                            supabase.table(tabla_dashboard).delete().eq("id", row_id).execute()
+                            fila_a_borrar = opciones_postulantes[postulante_sel]
+                            ws_del = workbook.worksheet(div_dashboard)
+                            ws_del.delete_rows(fila_a_borrar)
                             st.cache_data.clear()
                             
+                            st.session_state["del_count"] += 1
                             st.sidebar.success(f"✅ Postulante eliminado con éxito.")
                             st.rerun()
                         except Exception as e:
@@ -652,14 +666,19 @@ with tab_dashboard:
 
         with st.sidebar.expander("🚨 Zona de Peligro (Limpiar DB)"):
             st.warning(f"⚠️ Estás a punto de BORRAR TODOS los postulantes de: **{div_dashboard}**")
-            pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar toda la DB:", type="password", key="pwd_wipe_input")
+            st.caption("Esta acción no afectará a las otras divisiones y conservará los encabezados.")
+            
+            key_wipe = f"confirm_pwd_wipe_{st.session_state['wipe_count']}"
+            pwd_confirm = st.text_input("Confirma contraseña gerencial para borrar toda la DB:", type="password", key=key_wipe)
             
             if st.button(f"🗑️ Limpiar DB de {div_dashboard}", type="primary"):
                 if pwd_confirm == admin_password:
                     try:
-                        supabase.table(tabla_dashboard).delete().neq("id", 0).execute()
+                        ws_clean = workbook.worksheet(div_dashboard)
+                        ws_clean.batch_clear(["A2:Z1000"])
                         st.cache_data.clear()
                         
+                        st.session_state["wipe_count"] += 1
                         st.sidebar.success(f"✅ Base de datos de {div_dashboard} limpiada correctamente.")
                         st.rerun()
                     except Exception as e:
@@ -677,21 +696,22 @@ with tab_dashboard:
             else:
                 df.columns = [str(c).strip() for c in df.columns]
                 
-                col_estado = 'estado' if 'estado' in df.columns else next((c for c in df.columns if 'estado' in c.lower()), None)
+                col_estado = next((c for c in df.columns if 'estado' in c.lower()), None)
                 if not col_estado:
-                    df['estado'] = 'Tryout'
-                    col_estado = 'estado'
+                    df['Estado'] = 'Tryout'
+                    col_estado = 'Estado'
 
-                col_contacto = 'contacto' if 'contacto' in df.columns else df.columns[1]
+                col_contacto = next((c for c in df.columns if 'contacto' in c.lower() or 'discord' in c.lower()), df.columns[1])
                 
                 total_postulantes = len(df[df[col_contacto] != ''])
                 tryouts_activos = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'tryout']) 
                 aceptados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'aceptado']) 
                 rechazados = len(df[df[col_estado].astype(str).str.strip().str.lower() == 'rechazado'])
                 
-                df_bl_metric = load_data_from_supabase("lista_negra")
-                if not df_bl_metric.empty and 'division_origen' in df_bl_metric.columns:
-                    en_lista_negra = len(df_bl_metric[df_bl_metric['division_origen'].astype(str).str.strip() == div_dashboard])
+                df_bl_metric = load_data_from_sheet("Lista Negra")
+                if not df_bl_metric.empty and len(df_bl_metric.columns) >= 5:
+                    col_div_orig = df_bl_metric.columns[4]
+                    en_lista_negra = len(df_bl_metric[df_bl_metric[col_div_orig].astype(str).str.strip() == div_dashboard])
                 else:
                     en_lista_negra = 0
 
@@ -722,7 +742,7 @@ with tab_dashboard:
                 with col_g2:
                     if div_dashboard == "Fighting":
                         st.subheader("🥊 Demanda por Juego")
-                        col_juego = 'juego_especifico' if 'juego_especifico' in df.columns else next((c for c in df.columns if 'juego' in c.lower()), None)
+                        col_juego = next((c for c in df.columns if 'juego' in c.lower()), None)
                         if col_juego and not df[col_juego].empty:
                             juego_counts = df[col_juego].value_counts().reset_index()
                             juego_counts.columns = ['Juego', 'Cantidad']
@@ -731,7 +751,7 @@ with tab_dashboard:
                             st.plotly_chart(fig_roles, use_container_width=True)
                     else:
                         st.subheader("⚔️ Demanda por Rol")
-                        col_rol = 'rol' if 'rol' in df.columns else next((c for c in df.columns if 'rol' in c.lower()), None)
+                        col_rol = next((c for c in df.columns if 'rol' in c.lower()), None)
                         if col_rol and not df[col_rol].empty:
                             rol_counts = df[col_rol].value_counts().reset_index()
                             rol_counts.columns = ['Rol', 'Cantidad']
@@ -740,17 +760,20 @@ with tab_dashboard:
                             st.plotly_chart(fig_roles, use_container_width=True)
 
                 st.subheader("📋 Registro Detallado")
-                df_display = df.drop(columns=['id']) if 'id' in df.columns else df
-                st.dataframe(df_display, use_container_width=True)
+                st.dataframe(df, use_container_width=True)
 
             st.markdown("---")
             with st.expander(f"👀 Ver Jugadores Vetados en {div_dashboard} (Lista Negra)"):
-                df_bl = load_data_from_supabase("lista_negra")
-                if not df_bl.empty and 'division_origen' in df_bl.columns:
-                    df_bl_filtered = df_bl[df_bl['division_origen'].astype(str).str.strip() == div_dashboard]
+                df_bl = load_data_from_sheet("Lista Negra")
+                if not df_bl.empty:
+                    col_div_orig = next((c for c in df_bl.columns if 'división' in c.lower() or 'origen' in c.lower()), None)
+                    if col_div_orig:
+                        df_bl_filtered = df_bl[df_bl[col_div_orig].astype(str).str.strip() == div_dashboard]
+                    else:
+                        df_bl_filtered = df_bl
+                    
                     if not df_bl_filtered.empty:
-                        df_bl_display = df_bl_filtered.drop(columns=['id']) if 'id' in df_bl_filtered.columns else df_bl_filtered
-                        st.dataframe(df_bl_display, use_container_width=True)
+                        st.dataframe(df_bl_filtered, use_container_width=True)
                     else:
                         st.info(f"Actualmente no hay jugadores vetados en la Lista Negra para la división {div_dashboard}.")
                 else:
@@ -758,13 +781,13 @@ with tab_dashboard:
 
         with subtab_estado:
             st.subheader(f"📝 Modificar Estado en {div_dashboard}")
-            st.markdown("Edita el estado de los postulantes en la tabla y haz clic en **Guardar Cambios de Estado**.")
+            st.markdown("Busca y edita el estado de los postulantes directamente en la tabla interactiva y haz clic en **Guardar Cambios**.")
             
             if not df.empty:
-                col_estado_mod = 'estado' if 'estado' in df.columns else next((c for c in df.columns if 'estado' in c.lower()), None)
+                col_estado_mod = next((c for c in df.columns if 'estado' in c.lower()), None)
                 if not col_estado_mod:
-                    df['estado'] = 'Tryout'
-                    col_estado_mod = 'estado'
+                    df['Estado'] = 'Tryout'
+                    col_estado_mod = 'Estado'
                 
                 df[col_estado_mod] = df[col_estado_mod].astype(str).str.capitalize()
                 
@@ -783,26 +806,29 @@ with tab_dashboard:
                     df,
                     column_config=column_config_dict,
                     disabled=disabled_cols,
-                    key=f"data_editor_{tabla_dashboard}",
+                    key=f"data_editor_{div_dashboard}",
                     use_container_width=True,
                     hide_index=True
                 )
                 
                 if st.button("💾 Guardar Cambios de Estado", use_container_width=True):
                     try:
+                        ws_estado = workbook.worksheet(div_dashboard)
+                        col_idx = df.columns.tolist().index(col_estado_mod) + 1
+                        
                         cambios_realizados = 0
-                        for idx, row in df.iterrows():
-                            row_id = row.get("id")
-                            val_original = str(row[col_estado_mod]).strip()
+                        for idx in range(len(df)):
+                            val_original = str(df.iloc[idx][col_estado_mod]).strip()
                             val_nuevo = str(edited_df.iloc[idx][col_estado_mod]).strip()
                             
-                            if val_original != val_nuevo and row_id is not None:
-                                supabase.table(tabla_dashboard).update({col_estado_mod: val_nuevo}).eq("id", row_id).execute()
+                            if val_original != val_nuevo:
+                                fila_excel = idx + 2
+                                ws_estado.update_cell(fila_excel, col_idx, val_nuevo)
                                 cambios_realizados += 1
                         
                         st.cache_data.clear()
                         if cambios_realizados > 0:
-                            st.success(f"✅ Se actualizaron {cambios_realizados} estados correctamente en Supabase.")
+                            st.success(f"✅ Se actualizaron {cambios_realizados} estados correctamente en Google Sheets.")
                             st.rerun()
                         else:
                             st.info("ℹ️ No se detectaron cambios en los estados.")
