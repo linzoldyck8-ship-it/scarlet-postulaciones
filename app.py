@@ -29,7 +29,7 @@ RANGOS_OVERWATCH = [
     "Diamante 5", "Diamante 4", "Diamante 3", "Diamante 2", "Diamante 1",
     "Maestro 5", "Maestro 4", "Maestro 3", "Maestro 2", "Maestro 1",
     "Gran Maestro 5", "Gran Maestro 4", "Gran Maestro 3", "Gran Maestro 2", "Gran Maestro 1",
-    "Champion"
+    "TOP 500"
 ]
 
 ETIQUETAS_ID = {
@@ -48,13 +48,15 @@ HORARIOS_DIVISIONES = {
     "Valorant": {
         "División A": {"horario": "20:00 - 23:00 (Lun a Vie)", "rango": "Inmortal"},
         "División B": {"horario": "21:00 - 23:00 (Lun a Vie)", "rango": "plata"},
+        "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "CS": {
         "División A": {"horario": "22:00 - 01:00 (Lun a Vie)", "rango": "Nivel 5 Faceit/ 10 GC"},
     },
     "Overwatch": {
-        "División A": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "indefinido"},
-        "División B": {"horario": "21:00 - 00:00 (Lun a Vie)", "rango": "indefinido"},
+        "División A": {"horario": "20:00 - 23:00 (Mar, Jue, Sáb)", "rango": "Gran Maestro"},
+        "División B": {"horario": "18:00 - 21:00 (Lun, Mié, Vie)", "rango": "Maestro"},
+        "División C": {"horario": "16:00 - 19:00 (Sáb y Dom)", "rango": "Diamante"}
     },
     "Valorant Femenino": {
         "División A": {"horario": "21:00 - 23:00 (Lun a Vie)", "rango": "Ascendente"},
@@ -288,6 +290,43 @@ def actualizar_password_admin(nueva_clave):
     except Exception:
         return False
 
+# --- NUEVAS FUNCIONES PARA CONTROL DE POSTULACIONES ---
+@st.cache_data(ttl=5)
+def obtener_estado_postulaciones():
+    if not supabase:
+        return {}
+    try:
+        response = supabase.table("configuracion").select("*").execute()
+        estados = {
+            "Valorant": "abierta",
+            "Overwatch": "abierta",
+            "CS": "abierta",
+            "Valorant Femenino": "abierta",
+            "Fighting": "abierta"
+        }
+        if response.data:
+            for row in response.data:
+                clave = row["clave"]
+                if clave.startswith("estado_"):
+                    div_name = clave.replace("estado_", "")
+                    estados[div_name] = row["valor"]
+        return estados
+    except Exception:
+        return {}
+
+def actualizar_estado_postulacion(division, estado):
+    try:
+        clave = f"estado_{division}"
+        res = supabase.table("configuracion").select("*").eq("clave", clave).execute()
+        if res.data and len(res.data) > 0:
+            supabase.table("configuracion").update({"valor": estado}).eq("clave", clave).execute()
+        else:
+            supabase.table("configuracion").insert({"clave": clave, "valor": estado}).execute()
+        st.cache_data.clear()
+        return True
+    except Exception:
+        return False
+
 tab_formulario, tab_dashboard = st.tabs(["📝 Postularme al Roster", "📊 Panel Gerencial (Dashboard)"])
 
 with tab_formulario:
@@ -331,135 +370,142 @@ with tab_formulario:
                 </div>
                 """, unsafe_allow_html=True)
 
-    with st.form("form_postulacion"):
-        col_f1, col_f2 = st.columns(2)
-        
-        with col_f1:
-            if tipo_contacto == "Discord":
-                placeholder_txt = "Ej: usuario_discord o Scarlet#1234"
-            elif tipo_contacto == "Instagram":
-                placeholder_txt = "Ej: @mi_usuario_ig"
-            elif tipo_contacto == "Número Telefónico":
-                placeholder_txt = "Ej: +56912345678"
-            else:
-                placeholder_txt = "Ej: usuario@dominio.com"
+    # --- VERIFICACIÓN DE ESTADO DE POSTULACIONES ---
+    estados_actuales = obtener_estado_postulaciones()
+    estado_division = estados_actuales.get(division, "abierta")
 
-            contacto_valor = st.text_input(f"Ingresa tu {tipo_contacto}", placeholder=placeholder_txt)
-            edad = st.number_input("Edad", min_value=10, max_value=80, value=18, step=1)
+    if estado_division == "cerrada":
+        st.error(f"🚫 **POSTULACIONES CERRADAS:** Lo sentimos, no estamos aceptando solicitudes para **{division}** en este momento. ¡Mantente atento a nuestras redes para futuras aperturas!")
+    else:
+        with st.form("form_postulacion"):
+            col_f1, col_f2 = st.columns(2)
             
-            if division in ["Valorant", "Valorant Femenino"]:
-                player_id = st.text_input("Riot ID (Ej: Scarlet#NA1)")
-                rol = st.selectbox("Rol", ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"])
-                rango_actual = st.selectbox("Rango Actual", RANGOS_VALORANT)
-                peak_elo = st.selectbox("Peak Elo", RANGOS_VALORANT)
-            
-            elif division == "Overwatch":
-                player_id = st.text_input("BattleTag (Ej: Scarlet#1234)")
-                rol = st.selectbox("Rol", ["Tanque", "DPS", "Support", "Flex"])
-                rango_actual = st.selectbox("Rango Actual", RANGOS_OVERWATCH)
-                peak_elo = st.selectbox("Peak Elo", RANGOS_OVERWATCH)
-            
-            elif division == "CS":
-                player_id = st.text_input("Steam ID o Link de Perfil")
-                rol = st.selectbox("Rol", ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Rifler"])
-                rango_actual = st.text_input("Rango FACEIT/GC)")
-                peak_elo = st.text_input("Peak Elo / Max Rating")
+            with col_f1:
+                if tipo_contacto == "Discord":
+                    placeholder_txt = "Ej: usuario_discord o Scarlet#1234"
+                elif tipo_contacto == "Instagram":
+                    placeholder_txt = "Ej: @mi_usuario_ig"
+                elif tipo_contacto == "Número Telefónico":
+                    placeholder_txt = "Ej: +56912345678"
+                else:
+                    placeholder_txt = "Ej: usuario@dominio.com"
+
+                contacto_valor = st.text_input(f"Ingresa tu {tipo_contacto}", placeholder=placeholder_txt)
+                edad = st.number_input("Edad", min_value=10, max_value=80, value=18, step=1)
                 
-            elif division == "Fighting":
-                player_id = st.text_input("ID del Jugador (CFN, Tekken ID, etc.)")
-                juego_esp = st.selectbox("Juego Específico", ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"])
-                personaje = st.text_input("Personaje(s) Main")
-                rango_actual = st.text_input("Rango Actual")
-                peak_elo = st.text_input("Peak Elo")
-
-        with col_f2:
-            baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
-            notas = st.text_input("Link de Tracker / VODs / Notas adicionales")
-
-        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
-        col_espacio, col_boton = st.columns([1, 1])
-        with col_boton:
-            submitted = st.form_submit_button("🚀 Enviar Postulación", use_container_width=True)
-
-        if submitted:
-            contacto_formateado = f"{tipo_contacto}: {contacto_valor.strip()}"
-            
-            if not contacto_valor.strip() or not player_id.strip():
-                st.error(f"⚠️ Por favor ingresa tu {tipo_contacto} y tu ID de Jugador.")
-            elif tipo_contacto == "Correo Electrónico" and not es_correo_valido(contacto_valor.strip()):
-                st.error("⚠️ Por favor ingresa un correo electrónico válido (Ejemplo: usuario@dominio.com).")
-            elif edad < 14:
-                st.error("⚠️ Debes tener al menos 14 años para postularte a Scarlet Esports.")
-            elif not supabase:
-                st.error("⚠️ Error de conexión con Supabase.")
-            else:
-                try:
-                    tabla_nombre = limpiar_nombre_tabla(division)
+                if division in ["Valorant", "Valorant Femenino"]:
+                    player_id = st.text_input("Riot ID (Ej: Scarlet#NA1)")
+                    rol = st.selectbox("Rol", ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"])
+                    rango_actual = st.selectbox("Rango Actual", RANGOS_VALORANT)
+                    peak_elo = st.selectbox("Peak Elo", RANGOS_VALORANT)
+                
+                elif division == "Overwatch":
+                    player_id = st.text_input("BattleTag (Ej: Scarlet#1234)")
+                    rol = st.selectbox("Rol", ["Tanque", "DPS", "Support", "Flex"])
+                    rango_actual = st.selectbox("Rango Actual", RANGOS_OVERWATCH)
+                    peak_elo = st.selectbox("Peak Elo", RANGOS_OVERWATCH)
+                
+                elif division == "CS":
+                    player_id = st.text_input("Steam ID o Link de Perfil")
+                    rol = st.selectbox("Rol", ["Entry Fragger", "AWPer", "IGL", "Lurker", "Support", "Rifler"])
+                    rango_actual = st.text_input("Rango / Premier Rating Actual (Ej: Global, 15k, FACEIT Lvl 10)")
+                    peak_elo = st.text_input("Peak Elo / Max Rating")
                     
-                    res_bl = supabase.table("lista_negra").select("*").execute()
-                    registros_bl = res_bl.data if res_bl.data else []
-                    esta_vetado = False
-                    
-                    for fila_bl in registros_bl:
-                        id_vetado = str(fila_bl.get("id_jugador", "")).strip().lower()
-                        contacto_vetado = str(fila_bl.get("contacto", "")).strip().lower()
+                elif division == "Fighting":
+                    player_id = st.text_input("ID del Jugador (CFN, Tekken ID, etc.)")
+                    juego_esp = st.selectbox("Juego Específico", ["Street Fighter 6", "Tekken 8", "Mortal Kombat 1", "Guilty Gear", "Smash Bros", "Otro"])
+                    personaje = st.text_input("Personaje(s) Main")
+                    rango_actual = st.text_input("Rango Actual")
+                    peak_elo = st.text_input("Peak Elo")
+
+            with col_f2:
+                baneos = st.selectbox("Historial de Baneos / Toxicidad", ["Limpio", "Advertencia", "Chat Ban", "Ranked Ban", "Permanente/HWID"])
+                notas = st.text_input("Link de Tracker / VODs / Notas adicionales")
+
+            st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+            col_espacio, col_boton = st.columns([1, 1])
+            with col_boton:
+                submitted = st.form_submit_button("🚀 Enviar Postulación", use_container_width=True)
+
+            if submitted:
+                contacto_formateado = f"{tipo_contacto}: {contacto_valor.strip()}"
+                
+                if not contacto_valor.strip() or not player_id.strip():
+                    st.error(f"⚠️ Por favor ingresa tu {tipo_contacto} y tu ID de Jugador.")
+                elif tipo_contacto == "Correo Electrónico" and not es_correo_valido(contacto_valor.strip()):
+                    st.error("⚠️ Por favor ingresa un correo electrónico válido (Ejemplo: usuario@dominio.com).")
+                elif edad < 14:
+                    st.error("⚠️ Debes tener al menos 14 años para postularte a Scarlet Esports.")
+                elif not supabase:
+                    st.error("⚠️ Error de conexión con Supabase.")
+                else:
+                    try:
+                        tabla_nombre = limpiar_nombre_tabla(division)
                         
-                        if (id_vetado and id_vetado == player_id.strip().lower()) or \
-                           (contacto_vetado and (contacto_vetado == contacto_formateado.lower() or contacto_vetado == contacto_valor.strip().lower())):
-                            esta_vetado = True
-                            break
-                    
-                    if esta_vetado:
-                        st.error("❌ Tu postulación ha sido rechazada automáticamente. No cumples con los requisitos de ingreso para Scarlet Esports.")
-                    else:
-                        res_existentes = supabase.table(tabla_nombre).select("*").execute()
-                        registros_existentes = res_existentes.data if res_existentes.data else []
-                        duplicado = False
+                        res_bl = supabase.table("lista_negra").select("*").execute()
+                        registros_bl = res_bl.data if res_bl.data else []
+                        esta_vetado = False
                         
-                        for fila in registros_existentes:
-                            p_id = str(fila.get("player_id", fila.get("id_jugador", ""))).strip().lower()
-                            p_cont = str(fila.get("contacto", "")).strip().lower()
+                        for fila_bl in registros_bl:
+                            id_vetado = str(fila_bl.get("id_jugador", "")).strip().lower()
+                            contacto_vetado = str(fila_bl.get("contacto", "")).strip().lower()
                             
-                            if p_id == player_id.strip().lower() or p_cont == contacto_formateado.lower() or p_cont == contacto_valor.strip().lower():
-                                duplicado = True
+                            if (id_vetado and id_vetado == player_id.strip().lower()) or \
+                               (contacto_vetado and (contacto_vetado == contacto_formateado.lower() or contacto_vetado == contacto_valor.strip().lower())):
+                                esta_vetado = True
                                 break
                         
-                        if duplicado:
-                            st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Contacto en esta división.")
+                        if esta_vetado:
+                            st.error("❌ Tu postulación ha sido rechazada automáticamente. No cumples con los requisitos de ingreso para Scarlet Esports.")
                         else:
-                            if division in ["Valorant", "Valorant Femenino", "Overwatch", "CS"]:
-                                nueva_data = {
-                                    "player_id": player_id,
-                                    "contacto": contacto_formateado,
-                                    "edad": str(edad),
-                                    "rango_actual": rango_actual,
-                                    "rol": rol,
-                                    "peak_elo": peak_elo,
-                                    "baneos": baneos,
-                                    "estado": "Tryout",
-                                    "notas": notas,
-                                    "motivo_rechazo": ""
-                                }
-                            elif division == "Fighting":
-                                nueva_data = {
-                                    "player_id": player_id,
-                                    "contacto": contacto_formateado,
-                                    "edad": str(edad),
-                                    "juego_especifico": juego_esp,
-                                    "personaje": personaje,
-                                    "rango_actual": rango_actual,
-                                    "peak_elo": peak_elo,
-                                    "baneos": baneos,
-                                    "estado": "Tryout",
-                                    "notas": notas,
-                                    "motivo_rechazo": ""
-                                }
+                            res_existentes = supabase.table(tabla_nombre).select("*").execute()
+                            registros_existentes = res_existentes.data if res_existentes.data else []
+                            duplicado = False
                             
-                            supabase.table(tabla_nombre).insert(nueva_data).execute()
-                            st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
+                            for fila in registros_existentes:
+                                p_id = str(fila.get("player_id", fila.get("id_jugador", ""))).strip().lower()
+                                p_cont = str(fila.get("contacto", "")).strip().lower()
+                                
+                                if p_id == player_id.strip().lower() or p_cont == contacto_formateado.lower() or p_cont == contacto_valor.strip().lower():
+                                    duplicado = True
+                                    break
                             
-                except Exception as e:
-                    st.error(f"Hubo un error al registrar tus datos: {e}")
+                            if duplicado:
+                                st.error("⚠️ Ya existe una postulación registrada con este ID de Jugador o Contacto en esta división.")
+                            else:
+                                if division in ["Valorant", "Valorant Femenino", "Overwatch", "CS"]:
+                                    nueva_data = {
+                                        "player_id": player_id,
+                                        "contacto": contacto_formateado,
+                                        "edad": str(edad),
+                                        "rango_actual": rango_actual,
+                                        "rol": rol,
+                                        "peak_elo": peak_elo,
+                                        "baneos": baneos,
+                                        "estado": "Tryout",
+                                        "notas": notas,
+                                        "motivo_rechazo": ""
+                                    }
+                                elif division == "Fighting":
+                                    nueva_data = {
+                                        "player_id": player_id,
+                                        "contacto": contacto_formateado,
+                                        "edad": str(edad),
+                                        "juego_especifico": juego_esp,
+                                        "personaje": personaje,
+                                        "rango_actual": rango_actual,
+                                        "peak_elo": peak_elo,
+                                        "baneos": baneos,
+                                        "estado": "Tryout",
+                                        "notas": notas,
+                                        "motivo_rechazo": ""
+                                    }
+                                
+                                supabase.table(tabla_nombre).insert(nueva_data).execute()
+                                st.success(f"🎉 ¡Postulación a {division} enviada con éxito!")
+                                
+                    except Exception as e:
+                        st.error(f"Hubo un error al registrar tus datos: {e}")
 
 with tab_dashboard:
     if "autenticado" not in st.session_state:
@@ -482,7 +528,7 @@ with tab_dashboard:
                     st.error("❌ Contraseña incorrecta. Acceso denegado.")
                     
     else:
-        count = st_autorefresh(interval=10000, limit=None, key="scarlet_autorefresh")
+        count = st_autorefresh(interval=2000, limit=None, key="scarlet_autorefresh")
 
         st.title("🔥 PANEL GERENCIAL SCARLET ESPORTS")
         
@@ -495,6 +541,26 @@ with tab_dashboard:
         st.markdown(f"### Mostrando métricas de: **{div_dashboard}**")
 
         st.sidebar.markdown("## ⚙️ Panel de Control")
+
+        # --- SECCIÓN AÑADIDA: ABRIR/CERRAR POSTULACIONES ---
+        with st.sidebar.expander("🚦 Abrir / Cerrar Postulaciones"):
+            st.markdown("Activa o desactiva la recepción de formularios por división. Los cambios se guardan automáticamente.")
+            estados_div = obtener_estado_postulaciones()
+            
+            for div_name in ["Valorant", "Overwatch", "CS", "Valorant Femenino", "Fighting"]:
+                est = estados_div.get(div_name, "abierta")
+                is_open = True if est == "abierta" else False
+                
+                # Switch para abrir/cerrar
+                toggled = st.toggle(f"🎮 {div_name}", value=is_open, key=f"toggle_{div_name}")
+                nuevo_estado = "abierta" if toggled else "cerrada"
+                
+                if nuevo_estado != est:
+                    actualizar_estado_postulacion(div_name, nuevo_estado)
+                    st.rerun()
+        
+        st.sidebar.markdown("---")
+        
         if st.sidebar.button("🔄 Sincronizar Datos"):
             st.cache_data.clear()
             st.success("¡Sincronizado correctamente!")
