@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Gerencial - Scarlet Esports</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="top-nav">
+        <div class="logo">🛠️ PANEL GERENCIAL - SCARLET</div>
+        <nav>
+            <a href="/" target="_blank">Ver Sitio Web</a>
+            <a href="/admin/logout" style="color: #ff4655;">Cerrar Sesión</a>
+        </nav>
+    </header>
+
+    <div class="container" style="max-width: 1200px;">
+        <div class="header-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>📊 Gestión de Rosters y Postulaciones</h1>
+                <p>Administra los aspirantes y controla el estado de las convocatorias.</p>
+            </div>
+            <div>
+                <label><b>Seleccionar División:</b></label>
+                <select id="select-division" onchange="cargarDatosDivision()" style="padding: 8px; background: #161b22; color: #fff; border: 1px solid #30363d; border-radius: 6px;">
+                    <option value="valorant">Valorant</option>
+                    <option value="overwatch">Overwatch</option>
+                    <option value="cs">Counter-Strike (CS)</option>
+                    <option value="valorant_femenino">Valorant Femenino</option>
+                    <option value="fighting">Fighting Games</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Panel de Control de Estados (Abrir/Cerrar) -->
+        <div class="form-card" style="margin-bottom: 25px; padding: 15px 20px;">
+            <h3>🚦 Control de Convocatorias</h3>
+            <div id="controles-estado" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
+                <!-- Generado dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Tabla de Postulantes -->
+        <div class="form-card">
+            <h3 id="titulo-tabla">Postulantes: Valorant</h3>
+            <div style="overflow-x: auto; margin-top: 15px;">
+                <table id="tabla-postulantes" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="background: #21262d; border-bottom: 2px solid #ff4655;">
+                            <th style="padding: 10px;">ID / Jugador</th>
+                            <th style="padding: 10px;">Contacto</th>
+                            <th style="padding: 10px;">Edad</th>
+                            <th style="padding: 10px;">Rol / Rango</th>
+                            <th style="padding: 10px;">Peak Elo</th>
+                            <th style="padding: 10px;">Estado</th>
+                            <th style="padding: 10px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-postulantes">
+                        <!-- Datos cargados por JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const divisionesDisponibles = ["valorant", "overwatch", "cs", "valorant_femenino", "fighting"];
+
+        async function cargarConfiguracionEstado() {
+            try {
+                const res = await fetch('/api/configuracion');
+                const data = await res.json();
+                const contenedor = document.getElementById('controles-estado');
+                contenedor.innerHTML = '';
+
+                divisionesDisponibles.forEach(div => {
+                    const clave = `estado_${div}`;
+                    const configItem = data.find(item => item.clave === clave);
+                    const estadoActual = configItem ? configItem.valor : 'abierta';
+                    const esAbierta = estadoActual === 'abierta';
+
+                    contenedor.innerHTML += `
+                        <div style="background: #21262d; padding: 10px 15px; border-radius: 6px; border: 1px solid #30363d;">
+                            <span style="text-transform: capitalize; font-weight: bold;">${div.replace('_', ' ')}:</span> 
+                            <span style="color: ${esAbierta ? '#2ea043' : '#ff4655'};">${estadoActual.toUpperCase()}</span>
+                            <button onclick="cambiarEstadoConvocatoria('${clave}', '${esAbierta ? 'cerrada' : 'abierta'}')" style="margin-left: 10px; padding: 2px 8px; background: ${esAbierta ? '#da3633' : '#238636'}; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
+                                ${esAbierta ? 'Cerrar' : 'Abrir'}
+                            </button>
+                        </div>
+                    `;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        async function cambiarEstadoConvocatoria(clave, nuevoValor) {
+            await fetch('/api/configuracion', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ clave: clave, valor: nuevoValor })
+            });
+            cargarConfiguracionEstado();
+        }
+
+        async function cargarDatosDivision() {
+            const div = document.getElementById('select-division').value;
+            document.getElementById('titulo-tabla').innerText = `Postulantes: ${div.toUpperCase()}`;
+            
+            try {
+                // Endpoint para obtener postulantes de la tabla correspondiente
+                const res = await fetch(`/api/admin/obtener/${div}`);
+                const data = await res.json();
+                const tbody = document.getElementById('tbody-postulantes');
+                tbody.innerHTML = '';
+
+                if(!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #8b949e;">No hay postulaciones registradas en esta división.</td></tr>`;
+                    return;
+                }
+
+                data.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #30363d;">
+                            <td style="padding: 10px;"><b>${row.player_id}</b></td>
+                            <td style="padding: 10px;">${row.contacto}</td>
+                            <td style="padding: 10px;">${row.edad}</td>
+                            <td style="padding: 10px;">${row.rol || '-'} <br><small style="color: #8b949e;">${row.rango_actual}</small></td>
+                            <td style="padding: 10px;">${row.peak_elo}</td>
+                            <td style="padding: 10px;"><span style="padding: 3px 8px; border-radius: 4px; background: ${row.estado === 'Aceptado' ? '#238636' : row.estado === 'Rechazado' ? '#da3633' : '#1f6feb'}; color:#fff;">${row.estado}</span></td>
+                            <td style="padding: 10px;">
+                                <button onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Aceptado')" style="background:#238636; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Aceptar</button>
+                                <button onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Rechazado')" style="background:#da3633; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-left:4px;">Rechazar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        async function actualizarEstadoPostulante(div, id, nuevoEstado) {
+            await fetch(`/api/admin/actualizar_estado`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ division: div, id: id, estado: nuevoEstado })
+            });
+            cargarDatosDivision();
+        }
+
+        window.onload = () => {
+            cargarConfiguracionEstado();
+            cargarDatosDivision();
+        };
+    </script>
+</body>
+</html>
