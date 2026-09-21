@@ -106,48 +106,37 @@ def update_config():
 
 @app.route('/api/postular/<division>', methods=['POST'])
 def postular(division):
-    if limpiar_nombre_tabla(division) not in TABLAS_PERMITIDAS:
-        return jsonify({'error': 'División no válida'}), 400
+    # ... (toda la lógica que ya tenías para postular) ...
+    pass
+
+
+# ==========================================
+# PEGA AQUÍ LAS NUEVAS RUTAS DE ADMINISTRACIÓN
+# ==========================================
+
+@app.route('/api/admin/obtener/<division>', methods=['GET'])
+@admin_required
+def admin_obtener_division(division):
+    tabla = limpiar_nombre_tabla(division)
     if not supabase:
-        return jsonify({'error': 'Base de datos no conectada'}), 500
+        return jsonify([]), 500
+    try:
+        res = supabase.table(tabla).select('*').execute()
+        return jsonify(res.data if res.data else [])
+    except Exception as e:
+        return jsonify([]), 500
+
+@app.route('/api/admin/actualizar_estado', methods=['POST'])
+@admin_required
+def admin_actualizar_estado():
+    data = request.get_json()
+    division = data.get('division')
+    row_id = data.get('id')
+    nuevo_estado = data.get('estado')
+    tabla = limpiar_nombre_tabla(division)
     
     try:
-        data = request.get_json()
-        tabla_nombre = limpiar_nombre_tabla(division)
-        player_id = data.get('player_id', '').strip()
-        contacto = data.get('contacto', '').strip()
-
-        # Verificar lista negra
-        res_bl = supabase.table('lista_negra').select('*').execute()
-        for fila in (res_bl.data or []):
-            if str(fila.get('id_jugador', '')).strip().lower() == player_id.lower() or \
-               str(fila.get('contacto', '')).strip().lower() == contacto.lower():
-                return jsonify({'error': 'Tu postulación ha sido rechazada automáticamente por políticas del club.'}), 400
-
-        # Verificar duplicados
-        res_exist = supabase.table(tabla_nombre).select('*').execute()
-        for fila in (res_exist.data or []):
-            if str(fila.get('player_id', '')).strip().lower() == player_id.lower() or \
-               str(fila.get('contacto', '')).strip().lower() == contacto.lower():
-                return jsonify({'error': 'Ya existe una postulación registrada con este ID o Contacto.'}), 400
-
-        nueva_data = {
-            "player_id": player_id,
-            "contacto": contacto,
-            "edad": str(data.get('edad')),
-            "rango_actual": data.get('rango_actual'),
-            "rol": data.get('rol', 'Fighting'),
-            "peak_elo": data.get('peak_elo'),
-            "baneos": data.get('baneos'),
-            "estado": "Tryout",
-            "notas": data.get('notas', ''),
-            "motivo_rechazo": ""
-        }
-        if division == "Fighting":
-            nueva_data["juego_especifico"] = data.get('juego_especifico', '')
-            nueva_data["personaje"] = data.get('personaje', '')
-
-        supabase.table(tabla_nombre).insert(nueva_data).execute()
-        return jsonify({'status': 'success', 'message': 'Postulación enviada con éxito'})
+        supabase.table(tabla).update({'estado': nuevo_estado}).eq('id', row_id).execute()
+        return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
