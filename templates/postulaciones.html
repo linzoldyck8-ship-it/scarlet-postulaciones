@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postulaciones - Scarlet Esports</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="top-nav">
+        <div class="logo"><a href="/" style="color:inherit; text-decoration:none;">⚡ SCARLET ESPORTS</a></div>
+        <nav>
+            <a href="/">Inicio</a>
+            <a href="/postulaciones" class="active">Postulaciones</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="header-title">
+            <h1>📝 Formulario de Reclutamiento</h1>
+            <p>Selecciona tu división y completa los datos requeridos para iniciar tu proceso de Tryout.</p>
+        </div>
+
+        <div id="aviso-cerrado" style="display: none;" class="alert-error">
+            🚫 <strong>POSTULACIONES CERRADAS:</strong> No estamos aceptando solicitudes para esta división en este momento.
+        </div>
+
+        <div class="form-card" id="formulario-container">
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>🎮 Selecciona la División</label>
+                    <select id="division" onchange="cambiarDivision()">
+                        <option value="Valorant">Valorant</option>
+                        <option value="Overwatch">Overwatch</option>
+                        <option value="CS">Counter-Strike (CS)</option>
+                        <option value="Valorant Femenino">Valorant Femenino</option>
+                        <option value="Fighting">Fighting Games</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>📞 Método de Contacto</label>
+                    <select id="tipo_contacto" onchange="actualizarPlaceholder()">
+                        <option value="Discord">Discord</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Número Telefónico">Número Telefónico</option>
+                        <option value="Correo Electrónico">Correo Electrónico</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="info-horarios" class="info-horarios-box"></div>
+
+            <form id="form-postulacion" onsubmit="enviarPostulacion(event)">
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label id="label-contacto">Usuario de Discord</label>
+                        <input type="text" id="contacto_valor" required placeholder="Ej: Scarlet#1234">
+                    </div>
+                    <div class="input-group">
+                        <label>Edad</label>
+                        <input type="number" id="edad" min="10" max="80" value="18" required>
+                    </div>
+                </div>
+
+                <div class="grid-2" id="campos-juego">
+                    <!-- Dinámico según la división -->
+                </div>
+
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Historial de Baneos / Comportamiento</label>
+                        <select id="baneos">
+                            <option value="Limpio">Limpio</option>
+                            <option value="Advertencia">Advertencia</option>
+                            <option value="Chat Ban">Chat Ban</option>
+                            <option value="Ranked Ban">Ranked Ban</option>
+                            <option value="Permanente/HWID">Permanente/HWID</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Link de Tracker / VODs / Notas</label>
+                        <input type="text" id="notas" placeholder="Ej: https://tracker.gg/...">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">🚀 Enviar Postulación</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const rangosValorant = ["Hierro 1", "Hierro 2", "Hierro 3", "Bronce 1", "Bronce 2", "Bronce 3", "Plata 1", "Plata 2", "Plata 3", "Oro 1", "Oro 2", "Oro 3", "Platino 1", "Platino 2", "Platino 3", "Diamante 1", "Diamante 2", "Diamante 3", "Ascendente 1", "Ascendente 2", "Ascendente 3", "Inmortal 1", "Inmortal 2", "Inmortal 3", "Radiante"];
+        const rangosOverwatch = ["Bronce 5", "Bronce 4", "Bronce 3", "Bronce 2", "Bronce 1", "Plata 5", "Plata 4", "Plata 3", "Plata 2", "Plata 1", "Oro 5", "Oro 4", "Oro 3", "Oro 2", "Oro 1", "Platino 5", "Platino 4", "Platino 3", "Platino 2", "Platino 1", "Esmeralda 5", "Esmeralda 4", "Esmeralda 3", "Esmeralda 2", "Esmeralda 1", "Diamante 5", "Diamante 4", "Diamante 3", "Diamante 2", "Diamante 1", "Maestro 5", "Maestro 4", "Maestro 3", "Maestro 2", "Maestro 1", "Gran Maestro 5", "Gran Maestro 4", "Gran Maestro 3", "Gran Maestro 2", "Gran Maestro 1", "Champion"];
+        
+        const infoHorariosData = {
+            "Valorant": "⏰ Div A: 20:00 - 23:00 (Mín: Inmortal) | Div B: 21:00 - 23:00 (Mín: Plata)",
+            "Overwatch": "⏰ Div A: 21:00 - 00:00 (Mín: Gran Maestro) | Div B: 21:00 - 00:00 (Mín: Maestro)",
+            "CS": "⏰ Div A: 22:00 - 01:00 (Mín: Nivel 5 Faceit / 10 GC)",
+            "Valorant Femenino": "⏰ Div A: 21:00 - 23:00 (Mín: Ascendente)",
+            "Fighting": "⏰ Div A: 20:00 - 22:00 (Mín: Master) | Div B: 18:00 - 20:00 (Mín: Diamond+)"
+        };
+
+        function actualizarPlaceholder() {
+            const tipo = document.getElementById('tipo_contacto').value;
+            const label = document.getElementById('label-contacto');
+            const input = document.getElementById('contacto_valor');
+            label.innerText = `Ingresa tu ${tipo}`;
+            if(tipo === "Discord") input.placeholder = "Ej: usuario_discord";
+            else if(tipo === "Instagram") input.placeholder = "Ej: @usuario_ig";
+            else if(tipo === "Número Telefónico") input.placeholder = "Ej: +56912345678";
+            else input.placeholder = "Ej: correo@dominio.com";
+        }
+
+        function cambiarDivision() {
+            const div = document.getElementById('division').value;
+            document.getElementById('info-horarios').innerText = infoHorariosData[div] || "";
+            const camposJuego = document.getElementById('campos-juego');
+            
+            verificarEstadoDivision(div);
+
+            if(div === "Valorant" || div === "Valorant Femenino") {
+                camposJuego.innerHTML = `
+                    <div class="input-group"><label>Riot ID</label><input type="text" id="player_id" required placeholder="Ej: Scarlet#NA1"></div>
+                    <div class="input-group"><label>Rol</label><select id="rol"><option>Duelista</option><option>Iniciador</option><option>Controlador</option><option>Centinela</option><option>Flex</option></select></div>
+                    <div class="input-group"><label>Rango Actual</label><select id="rango_actual">${rangosValorant.map(r=>`<option>${r}</option>`).join('')}</select></div>
+                    <div class="input-group"><label>Peak Elo</label><select id="peak_elo">${rangosValorant.map(r=>`<option>${r}</option>`).join('')}</select></div>
+                `;
+            } else if(div === "Overwatch") {
+                camposJuego.innerHTML = `
+                    <div class="input-group"><label>BattleTag</label><input type="text" id="player_id" required placeholder="Ej: Scarlet#1234"></div>
+                    <div class="input-group"><label>Rol</label><select id="rol"><option>Tanque</option><option>DPS</option><option>Support</option><option>Flex</option></select></div>
+                    <div class="input-group"><label>Rango Actual</label><select id="rango_actual">${rangosOverwatch.map(r=>`<option>${r}</option>`).join('')}</select></div>
+                    <div class="input-group"><label>Peak Elo</label><select id="peak_elo">${rangosOverwatch.map(r=>`<option>${r}</option>`).join('')}</select></div>
+                `;
+            } else if(div === "CS") {
+                camposJuego.innerHTML = `
+                    <div class="input-group"><label>Steam ID / Link</label><input type="text" id="player_id" required placeholder="Link de perfil Steam"></div>
+                    <div class="input-group"><label>Rol</label><select id="rol"><option>Entry Fragger</option><option>AWPer</option><option>IGL</option><option>Lurker</option><option>Support</option><option>Rifler</option></select></div>
+                    <div class="input-group"><label>Rango FACEIT / GC</label><input type="text" id="rango_actual" required placeholder="Ej: Nivel 7 / 1800 Elo"></div>
+                    <div class="input-group"><label>Peak Elo / Rating</label><input type="text" id="peak_elo" required placeholder="Peak Elo"></div>
+                `;
+            } else if(div === "Fighting") {
+                camposJuego.innerHTML = `
+                    <div class="input-group"><label>ID del Jugador</label><input type="text" id="player_id" required placeholder="CFN / Tekken ID"></div>
+                    <div class="input-group"><label>Juego Específico</label><select id="juego_especifico"><option>Street Fighter 6</option><option>Tekken 8</option><option>Mortal Kombat 1</option><option>Guilty Gear</option><option>Smash Bros</option><option>Otro</option></select></div>
+                    <div class="input-group"><label>Personaje Main</label><input type="text" id="personaje" required placeholder="Ej: Ryu / Kazuya"></div>
+                    <div class="input-group"><label>Rango Actual</label><input type="text" id="rango_actual" required placeholder="Ej: Master"></div>
+                    <div class="input-group"><label>Peak Elo</label><input type="text" id="peak_elo" required placeholder="Peak Elo"></div>
+                `;
+            }
+        }
+
+        async function verificarEstadoDivision(div) {
+            try {
+                const res = await fetch('/api/configuracion');
+                const data = await res.json();
+                const estadoObj = data.find(item => item.clave === `estado_${div}`);
+                const cerrado = estadoObj && estadoObj.valor === 'cerrada';
+                
+                document.getElementById('formulario-container').style.display = cerrado ? 'none' : 'block';
+                document.getElementById('aviso-cerrado').style.display = cerrado ? 'block' : 'none';
+            } catch(e) { console.error(e); }
+        }
+
+        async function enviarPostulacion(e) {
+            e.preventDefault();
+            const div = document.getElementById('division').value;
+            const data = {
+                player_id: document.getElementById('player_id').value,
+                contacto: `${document.getElementById('tipo_contacto').value}: ${document.getElementById('contacto_valor').value}`,
+                edad: document.getElementById('edad').value,
+                rango_actual: document.getElementById('rango_actual').value,
+                peak_elo: document.getElementById('peak_elo').value,
+                rol: document.getElementById('rol') ? document.getElementById('rol').value : 'Fighting',
+                juego_especifico: document.getElementById('juego_especifico') ? document.getElementById('juego_especifico').value : '',
+                personaje: document.getElementById('personaje') ? document.getElementById('personaje').value : '',
+                baneos: document.getElementById('baneos').value,
+                notas: document.getElementById('notas').value
+            };
+
+            const res = await fetch(`/api/postular/${div}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if(res.ok) {
+                alert("🎉 ¡Postulación enviada con éxito!");
+                window.location.reload();
+            } else {
+                alert("⚠️ " + (result.error || "Error al enviar postulación"));
+            }
+        }
+
+        window.onload = () => { cambiarDivision(); };
+    </script>
+</body>
+</html>
