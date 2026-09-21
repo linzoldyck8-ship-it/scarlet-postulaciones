@@ -42,7 +42,6 @@ def postulaciones():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_login():
-    # Obtener contraseña desde Supabase o usar por defecto 'cazuela'
     admin_password = 'cazuela'
     if supabase:
         try:
@@ -106,13 +105,66 @@ def update_config():
 
 @app.route('/api/postular/<division>', methods=['POST'])
 def postular(division):
-    # ... (toda la lógica que ya tenías para postular) ...
-    pass
+    try:
+        tabla_nombre = limpiar_nombre_tabla(division)
+        if tabla_nombre not in TABLAS_PERMITIDAS:
+            return jsonify({'error': f'División no válida: {division}'}), 400
+        if not supabase:
+            return jsonify({'error': 'Base de datos no conectada'}), 500
+        
+        data = request.get_json() or {}
+        player_id = str(data.get('player_id', '')).strip()
+        contacto = str(data.get('contacto', '')).strip()
 
+        if not player_id or not contacto:
+            return jsonify({'error': 'Faltan campos obligatorios (ID o Contacto)'}), 400
 
-# ==========================================
-# PEGA AQUÍ LAS NUEVAS RUTAS DE ADMINISTRACIÓN
-# ==========================================
+        # Verificar lista negra
+        try:
+            res_bl = supabase.table('lista_negra').select('*').execute()
+            for fila in (res_bl.data or []):
+                if str(fila.get('id_jugador', '')).strip().lower() == player_id.lower() or \
+                   str(fila.get('contacto', '')).strip().lower() == contacto.lower():
+                    return jsonify({'error': 'Tu postulación ha sido rechazada automáticamente por políticas del club.'}), 400
+        except Exception as e:
+            print("Aviso lista negra:", e)
+
+        # Verificar duplicados
+        try:
+            res_exist = supabase.table(tabla_nombre).select('*').execute()
+            for fila in (res_exist.data or []):
+                if str(fila.get('player_id', '')).strip().lower() == player_id.lower() or \
+                   str(fila.get('contacto', '')).strip().lower() == contacto.lower():
+                    return jsonify({'error': 'Ya existe una postulación registrada con este ID o Contacto.'}), 400
+        except Exception as e:
+            print("Aviso duplicados:", e)
+
+        nueva_data = {
+            "player_id": player_id,
+            "contacto": contacto,
+            "edad": str(data.get('edad', '18')),
+            "rango_actual": str(data.get('rango_actual', '')),
+            "rol": str(data.get('rol', 'Flex')),
+            "peak_elo": str(data.get('peak_elo', '')),
+            "baneos": str(data.get('baneos', 'Limpio')),
+            "estado": "Tryout",
+            "notas": str(data.get('notas', '')),
+            "motivo_rechazo": ""
+        }
+        
+        if tabla_nombre == "fighting":
+            nueva_data["juego_especifico"] = str(data.get('juego_especifico', ''))
+            nueva_data["personaje"] = str(data.get('personaje', ''))
+
+        # Insertar en Supabase
+        supabase.table(tabla_nombre).insert(nueva_data).execute()
+        return jsonify({'status': 'success', 'message': 'Postulación enviada con éxito'})
+        
+    except Exception as e:
+        print("=== ERROR CRÍTICO EN POSTULAR ===")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Error interno: {str(e)}'}), 500
 
 @app.route('/api/admin/obtener/<division>', methods=['GET'])
 @admin_required
@@ -140,3 +192,6 @@ def admin_actualizar_estado():
         return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
