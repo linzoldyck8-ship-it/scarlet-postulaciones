@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Acceso Gerencial - Scarlet</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+    <div class="form-card" style="width: 100%; max-width: 400px; text-align: center;">
+        <h2>🔒 Panel Gerencial</h2>
+        <form method="POST" style="margin-top: 20px;">
+            <div class="input-group" style="text-align: left;">
+                <label>Contraseña de Administrador</label>
+                <input type="password" name="password" required style="width: 100%; padding: 10px;">
+            </div>
+            {% if error %}
+            <p style="color: #ff4655; margin-top: 10px;">{{ error }}</p>
+            {% endif %}
+            <button type="submit" class="btn-submit" style="margin-top: 20px; width: 100%;">Ingresar</button>
+        </form>
+    </div>
+</body>
+</html>
