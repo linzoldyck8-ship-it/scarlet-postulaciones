@@ -3,46 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scarlet Esports - Portal Oficial</title>
+    <title>Scarlet Esports - Inicio</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header class="top-nav">
         <div class="logo">⚡ SCARLET ESPORTS</div>
         <nav>
-            <a href="/" class="active">Inicio</a>
-            <a href="/postulaciones" class="nav-btn-highlight">🚀 Postularme al Roster</a>
+            <a href="/" style="color: #ff4655;">Inicio</a>
+            <a href="/postulaciones">🚀 Postularme al Roster</a>
         </nav>
     </header>
 
-    <div class="container">
-        <div class="hero-banner" style="text-align: center; padding: 60px 20px;">
-            <h1 style="font-size: 3rem; margin-bottom: 20px;">BIENVENIDO A SCARLET ESPORTS</h1>
-            <p style="font-size: 1.2rem; color: #a3b1c2; max-width: 800px; margin: 0 auto 30px auto;">
+    <div style="max-width: 1100px; margin: 50px auto; padding: 0 20px; text-align: center;">
+        <div class="form-card" style="padding: 50px 30px;">
+            <h1 style="font-size: 2.8rem; font-weight: 700; margin-bottom: 15px; letter-spacing: 1px;">
+                BIENVENIDO A SCARLET ESPORTS
+            </h1>
+            <p style="color: #a0a0b0; max-width: 700px; margin: 0 auto 30px auto; font-size: 1.1rem; line-height: 1.6;">
                 Somos una organización de deportes electrónicos competitiva de alto rendimiento. Buscamos el talento definitivo para dominar las ligas regionales en nuestros rosters oficiales.
             </p>
-            <a href="/postulaciones" class="btn-main-action">Ver Convocatorias y Postular</a>
+            <a href="/postulaciones" class="btn-primary" style="font-size: 1rem; padding: 15px 35px;">
+                Ver Convocatorias y Postular
+            </a>
         </div>
 
-        <div class="categories-grid" style="margin-top: 40px;">
-            <div class="category-card">
-                <h2>🎮 Divisiones Activas</h2>
-                <p>Contamos con equipos competitivos en Valorant, Overwatch 2, Counter-Strike, Valorant Femenino y Fighting Games.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px; text-align: left;">
+            <div class="form-card">
+                <h3 style="color: #ff4655; margin-bottom: 10px;">🎮 Divisiones Activas</h3>
+                <p style="color: #a0a0b0; font-size: 0.95rem;">Contamos con equipos competitivos en Valorant, Overwatch 2, Counter-Strike, Valorant Femenino y Fighting Games.</p>
             </div>
-            <div class="category-card">
-                <h2>📊 Proceso Riguroso</h2>
-                <p>Evaluamos estadísticas, rendimiento en scrims y actitud competitiva mediante un panel de gerencia profesional.</p>
+            <div class="form-card">
+                <h3 style="color: #ff4655; margin-bottom: 10px;">📊 Proceso Riguroso</h3>
+                <p style="color: #a0a0b0; font-size: 0.95rem;">Evaluamos estadísticas, rendimiento en scrims y actitud competitiva mediante un panel de gerencia profesional.</p>
             </div>
-            <div class="category-card">
-                <h2>🏆 Alta Competencia</h2>
-                <p>Entrenamientos estructurados en horarios de Chile con staff técnico dedicado al desarrollo de los jugadores.</p>
+            <div class="form-card">
+                <h3 style="color: #ff4655; margin-bottom: 10px;">🏆 Alta Competencia</h3>
+                <p style="color: #a0a0b0; font-size: 0.95rem;">Entrenamientos estructurados en horarios de Chile con staff técnico dedicado al desarrollo de los jugadores.</p>
             </div>
         </div>
+
+        <footer style="margin-top: 40px; color: #6e7681; font-size: 0.85rem;">
+            © 2026 Scarlet Esports. Todos los derechos reservados.
+        </footer>
     </div>
-
-    <!-- Enlace de administración ultra discreto en el pie de página -->
-    <footer style="text-align: center; padding: 40px; color: #484f58; font-size: 0.8rem;">
-        <p>© 2026 Scarlet Esports. Todos los derechos reservados. <a href="/admin" style="color: inherit; text-decoration: none; margin-left: 10px;" title="Gerencia">⚙️</a></p>
-    </footer>
 </body>
 </html>
