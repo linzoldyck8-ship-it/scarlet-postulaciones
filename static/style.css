@@ -1,114 +1,64 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
 :root {
-    --bg-color: #0f0f13;
-    --card-bg: rgba(22, 27, 34, 0.85);
+    --bg-dark: #0f0f13;
+    --card-bg: rgba(22, 27, 34, 0.90);
     --accent-red: #ff4655;
     --accent-hover: #da3633;
-    --text-main: #f0f0f5;
+    --text-bright: #ffffff;
     --text-sub: #a0a0b0;
-    --border-color: rgba(255, 255, 255, 0.1);
+    --border-color: rgba(255, 255, 255, 0.15);
 }
 
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Poppins', sans-serif;
-}
+    margin: Entendido, tiene todo el sentido. Al eliminar los desplegables se perdió la estructura clara del flujo y la agilidad para revisar la información por área. Además, la imagen debe reaccionar dinámicamente al juego seleccionado para dar feedback visual inmediato.
 
-/* Fondo global con animación de transición */
-body {
-    background-color: var(--bg-color);
-    background-image: linear-gradient(rgba(15, 15, 19, 0.82), rgba(15, 15, 19, 0.92)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    transition: background-image 0.6s ease-in-out;
-    color: var(--text-main);
-    min-height: 100vh;
-}
+Aquí tienes la solución completa para restaurar los desplegables e implementar el cambio dinámico de imagen según el juego seleccionado:
 
-/* Barra de Navegación */
-.top-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 30px;
-    background: rgba(15, 15, 19, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 2px solid var(--accent-red);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
+---
 
-.top-nav .logo {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: 1px;
-}
+### 1. Estructura HTML (Con Desplegables e Imagen Dinámica)
 
-.top-nav nav a {
-    color: var(--text-main);
-    text-decoration: none;
-    margin-left: 20px;
-    font-weight: 600;
-    transition: color 0.3s;
-}
+```html
+<section class="postulacion-container">
+  <!-- Panel Izquierdo: Menús Desplegables (Acordeón) -->
+  <div class="info-panel">
+    <h2>Áreas de Postulación</h2>
+    
+    <details class="acordeon-item" data-game="valorant" open>
+      <summary onclick="cambiarImagenGame('valorant')">
+        <span>🎮 Valorant / Valorant Femenino</span>
+      </summary>
+      <div class="acordeon-content">
+        <p><strong>Requisitos:</strong> Rango Inmortal+, disponibilidad de horarios de Chile, scrims 4 días a la semana.</p>
+        <button class="btn-postular">Postular a Valorant</button>
+      </div>
+    </details>
 
-.top-nav nav a:hover {
-    color: var(--accent-red);
-}
+    <details class="acordeon-item" data-game="overwatch">
+      <summary onclick="cambiarImagenGame('overwatch')">
+        <span>🛡️ Overwatch 2</span>
+      </summary>
+      <div class="acordeon-content">
+        <p><strong>Requisitos:</strong> Top 500 / Grandmaster, comunicación fluida por Discord, compromiso con staff técnico.</p>
+        <button class="btn-postular">Postular a Overwatch</button>
+      </div>
+    </details>
 
-/* Tarjetas Transparentes (Glassmorphism) */
-.form-card, .card {
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-color) !important;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-    padding: 25px;
-    margin-bottom: 25px;
-}
+    <details class="acordeon-item" data-game="cs">
+      <summary onclick="cambiarImagenGame('cs')">
+        <span>🎯 Counter-Strike 2</span>
+      </summary>
+      <div class="acordeon-content">
+        <p><strong>Requisitos:</strong> Level 10 Gamers Club / FACEIT 2000+ Elo, experiencia en torneos locales.</p>
+        <button class="btn-postular">Postular a CS2</button>
+      </div>
+    </details>
+  </div>
 
-/* Inputs, Selects y Textareas */
-input, select, textarea {
-    width: 100%;
-    padding: 12px 15px;
-    background: rgba(15, 15, 19, 0.8);
-    color: #fff;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    margin-top: 5px;
-    outline: none;
-    transition: border-color 0.3s;
-}
-
-input:focus, select:focus, textarea:focus {
-    border-color: var(--accent-red);
-}
-
-/* Botones */
-.btn-primary {
-    background: var(--accent-red);
-    color: #fff;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    width: 100%;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: background-color 0.3s, transform 0.2s;
-}
-
-.btn-primary:hover {
-    background: var(--accent-hover);
-    transform: translateY(-2px);
-}
+  <!-- Panel Derecho: Imagen Dinámica -->
+  <div class="media-panel">
+    <img id="game-preview" src="assets/valorant-banner.jpg" alt="Vista previa de división" />
+  </div>
+</section>
