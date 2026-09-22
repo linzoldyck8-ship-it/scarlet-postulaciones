@@ -20,6 +20,17 @@
         .btn-rechazar { background: #da3633; }
         .btn-blacklist { background: #8e1515; }
         .btn-eliminar { background: #484f58; }
+        .btn-vaciar-db {
+            background: #b02a37;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-vaciar-db:hover { background: #dc3545; }
         .btn-aceptar:hover { background: #2ea043; }
         .btn-rechazar:hover { background: #f85149; }
         .btn-blacklist:hover { background: #b02a37; }
@@ -63,8 +74,12 @@
 
         <!-- TABLA DE POSTULANTES -->
         <div class="form-card">
-            <h3 id="titulo-tabla">Postulantes: VALORANT</h3>
-            <div style="overflow-x: auto; margin-top: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                <h3 id="titulo-tabla">Postulantes: VALORANT</h3>
+                <button class="btn-vaciar-db" onclick="vaciarBaseDatosDivision()">🗑️ Vaciar Base de Datos</button>
+            </div>
+            
+            <div style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
@@ -178,6 +193,36 @@
                     `;
                 });
             } catch(e) { console.error(e); }
+        }
+
+        async function vaciarBaseDatosDivision() {
+            const div = document.getElementById('select-division').value;
+            const password = prompt(`⚠️ ¡ATENCIÓN! Estás a punto de BORRAR TODOS los datos registrados en la división ${div.toUpperCase().replace('_', ' ')}.\n\nPara confirmar, ingresa la contraseña de administrador:`);
+            
+            if (password === null) return; // Si cancela el prompt
+
+            if (!password.trim()) {
+                alert("⚠️ Debe ingresar la contraseña para continuar.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/admin/vaciar/${div}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ password: password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('✅ ' + data.message);
+                    cargarDatosDivision();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'No se pudo vaciar la base de datos'));
+                }
+            } catch (e) {
+                alert('❌ Error de conexión al servidor.');
+            }
         }
 
         async function actualizarEstadoPostulante(div, id, nuevoEstado) {
