@@ -156,7 +156,6 @@ def postular(division):
             nueva_data["juego_especifico"] = str(data.get('juego_especifico', ''))
             nueva_data["personaje"] = str(data.get('personaje', ''))
 
-        # Insertar en Supabase
         supabase.table(tabla_nombre).insert(nueva_data).execute()
         return jsonify({'status': 'success', 'message': 'Postulación enviada con éxito'})
         
@@ -165,6 +164,8 @@ def postular(division):
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'Error interno: {str(e)}'}), 500
+
+# --- RUTAS DE ADMINISTRACIÓN ---
 
 @app.route('/api/admin/obtener/<division>', methods=['GET'])
 @admin_required
@@ -190,6 +191,80 @@ def admin_actualizar_estado():
     try:
         supabase.table(tabla).update({'estado': nuevo_estado}).eq('id', row_id).execute()
         return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/eliminar_postulante', methods=['POST'])
+@admin_required
+def admin_eliminar_postulante():
+    """Elimina permanentemente a un postulante de una división"""
+    data = request.get_json() or {}
+    division = data.get('division')
+    row_id = data.get('id')
+    tabla = limpiar_nombre_tabla(division)
+    
+    if tabla not in TABLAS_PERMITIDAS:
+        return jsonify({'error': 'División no válida'}), 400
+        
+    try:
+        supabase.table(tabla).delete().eq('id', row_id).execute()
+        return jsonify({'status': 'success', 'message': 'Postulante eliminado correctamente'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/agregar_blacklist', methods=['POST'])
+@admin_required
+def admin_agregar_blacklist():
+    """Agrega un postulante a la lista negra y lo elimina de la división activa"""
+    data = request.get_json() or {}
+    player_id = data.get('player_id', '').strip()
+    contacto = data.get('contacto', '').strip()
+    motivo = data.get('motivo', 'Agregado desde panel gerencial').strip()
+    division = data.get('division')
+    row_id = data.get('id')
+    
+    if not player_id and not contacto:
+        return jsonify({'error': 'Debe proporcionar Player ID o Contacto'}), 400
+        
+    try:
+        # 1. Registrar en la lista negra
+        supabase.table('lista_negra').insert({
+            'id_jugador': player_id,
+            'contacto': contacto,
+            'motivo': motivo
+        }).execute()
+
+        # 2. Si venía de una tabla activa, borrarlo de esa división
+        if division and row_id:
+            tabla = limpiar_nombre_tabla(division)
+            if tabla in TABLAS_PERMITIDAS:
+                supabase.table(tabla).delete().eq('id', row_id).execute()
+
+        return jsonify({'status': 'success', 'message': 'Jugador enviado a Lista Negra correctamente'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/obtener_blacklist', methods=['GET'])
+@admin_required
+def admin_obtener_blacklist():
+    """Obtiene la lista de jugadores baneados"""
+    if not supabase:
+        return jsonify([]), 500
+    try:
+        res = supabase.table('lista_negra').select('*').execute()
+        return jsonify(res.data if res.data else [])
+    except Exception as e:
+        return jsonify([]), 500
+
+@app.route('/api/admin/eliminar_blacklist', methods=['POST'])
+@admin_required
+def admin_eliminar_blacklist():
+    """Desbloquea a un jugador quitándolo de la lista negra"""
+    data = request.get_json() or {}
+    row_id = data.get('id')
+    try:
+        supabase.table('lista_negra').delete().eq('id', row_id).execute()
+        return jsonify({'status': 'success', 'message': 'Jugador quitado de la Lista Negra'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
