@@ -11,74 +11,82 @@
         <div class="logo">🔥 SCARLET ESPORTS</div>
         <nav>
             <a href="/">Inicio</a>
-            <a href="/postulaciones" style="color: #ff4655;">Postulaciones</a>
+            <a href="/postulaciones" style="color: #ff4655;">Postularme al Roster</a>
         </nav>
     </header>
 
-    <div class="container" style="max-width: 650px; margin: 40px auto; padding: 0 15px;">
-        <div class="form-card">
-            <h1 style="font-size: 1.8rem; text-align: center; margin-bottom: 10px;">🏆 Postulación de Roster</h1>
-            <p style="text-align: center; color: #a0a0b0; margin-bottom: 25px; font-size: 0.9rem;">
-                Demuestra tu talento y forma parte de nuestra alineación oficial.
-            </p>
-
-            <form id="form-postular">
-                <div style="margin-bottom: 15px;">
-                    <label><b>Selecciona la División:</b></label>
-                    <select id="division" name="division" onchange="cambiarFondoJuego(this.value)">
-                        <option value="valorant">Valorant</option>
-                        <option value="overwatch">Overwatch</option>
-                        <option value="cs">Counter-Strike (CS)</option>
-                        <option value="valorant_femenino">Valorant Femenino</option>
-                        <option value="fighting">Fighting Games</option>
-                    </select>
+    <section class="postulacion-container">
+        <!-- Panel Izquierdo: Menús Desplegables (Acordeón) -->
+        <div class="info-panel">
+            <h2>Áreas de Postulación</h2>
+            
+            <details class="acordeon-item" data-game="valorant" open>
+                <summary onclick="cambiarImagenGame('valorant')">
+                    <span>🎮 Valorant / Valorant Femenino</span>
+                </summary>
+                <div class="acordeon-content">
+                    <p><strong>Requisitos:</strong> Rango Inmortal+, disponibilidad de horarios de Chile, scrims 4 días a la semana.</p>
+                    <button class="btn-postular">Postular a Valorant</button>
                 </div>
+            </details>
 
-                <div style="margin-bottom: 15px;">
-                    <label><b>ID de Jugador (Riot ID / Steam / BattleTag):</b></label>
-                    <input type="text" id="player_id" name="player_id" placeholder="Ej: ScarletPlayer#LAN" required>
+            <details class="acordeon-item" data-game="overwatch">
+                <summary onclick="cambiarImagenGame('overwatch')">
+                    <span>🛡️ Overwatch 2</span>
+                </summary>
+                <div class="acordeon-content">
+                    <p><strong>Requisitos:</strong> Top 500 / Grandmaster, comunicación fluida por Discord, compromiso con staff técnico.</p>
+                    <button class="btn-postular">Postular a Overwatch</button>
                 </div>
+            </details>
 
-                <div style="margin-bottom: 15px;">
-                    <label><b>Contacto (Discord / WhatsApp / Email):</b></label>
-                    <input type="text" id="contacto" name="contacto" placeholder="Ej: discord_user#1234" required>
+            <details class="acordeon-item" data-game="cs">
+                <summary onclick="cambiarImagenGame('cs')">
+                    <span>🎯 Counter-Strike 2</span>
+                </summary>
+                <div class="acordeon-content">
+                    <p><strong>Requisitos:</strong> Level 10 Gamers Club / FACEIT 2000+ Elo, experiencia en torneos locales.</p>
+                    <button class="btn-postular">Postular a CS2</button>
                 </div>
+            </details>
+        </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label><b>Edad:</b></label>
-                    <input type="number" id="edad" name="edad" placeholder="18" min="12" max="99" required>
-                </div>
+        <!-- Panel Derecho: Imagen Dinámica -->
+        <div class="media-panel">
+            <img id="game-preview" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920" alt="Vista previa de división" />
+        </div>
+    </section>
 
-                <div style="margin-bottom: 15px;">
-                    <label><b>Rol Principal:</b></label>
-                    <input type="text" id="rol" name="rol" placeholder="Ej: Duelista / Support / Entry">
-                </div>
+    <!-- Script de lógica JavaScript -->
+    <script>
+        const imagenesJuegos = {
+            valorant: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920',
+            overwatch: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1920',
+            cs: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=1920',
+            fighting: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1920'
+        };
 
-                <div style="margin-bottom: 15px;">
-                    <label><b>Rango Actual:</b></label>
-                    <input type="text" id="rango_actual" name="rango_actual" placeholder="Ej: Inmortal 2 / Gran Maestro">
-                </div>
+        function cambiarImagenGame(juego) {
+            const imgElement = document.getElementById('game-preview');
+            
+            if (imagenesJuegos[juego]) {
+                imgElement.style.opacity = '0.3';
+                setTimeout(() => {
+                    imgElement.src = imagenesJuegos[juego];
+                    imgElement.style.opacity = '1';
+                }, 150);
+            }
+        }
 
-                <div style="margin-bottom: 15px;">
-                    <label><b>Peak Elo (Rango Máximo Alcanzado):</b></label>
-                    <input type="text" id="peak_elo" name="peak_elo" placeholder="Ej: Radiante / Top 500">
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label><b>¿Has tenido baneos previos o sanciones?:</b></label>
-                    <input type="text" id="baneos" name="baneos" placeholder="Indica 'Limpio' o detalla la razón">
-                </div>
-
-                <button type="submit"Para extender una configuración, estilo, regla de seguridad o script a **toda la página en general** (en lugar de restringirlo al módulo administrativo), la implementación depende de qué capa del sistema estés modificando:
-
----
-
-### 1. Intercepción de Rutas y Lógica (Middleware Global)
-Si necesitas aplicar una validación, sesión, idioma o regla de seguridad a todas las vistas:
-
-* **Next.js / Middleware:**
-  Define el matcher para todas las rutas en `middleware.ts`:
-  ```typescript
-  export const config = {
-    matcher: '/((?!_next/static|_next/image|favicon.ico).*)',
-  };
+        document.querySelectorAll('.acordeon-item').forEach(item => {
+            item.addEventListener('toggle', () => {
+                if (item.open) {
+                    document.querySelectorAll('.acordeon-item').forEach(other => {
+                        if (other !== item) other.removeAttribute('open');
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
