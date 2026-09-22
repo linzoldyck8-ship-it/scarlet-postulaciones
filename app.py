@@ -268,5 +268,26 @@ def admin_eliminar_blacklist():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ... (código previo de tus rutas existentes) ...
+
+@app.route('/api/admin/vaciar/<division>', methods=['POST'])
+def vaciar_division(division):
+    data = request.get_json() or {}
+    password = data.get('password')
+    
+    if password != "cazuela":  # Contraseña del panel
+        return jsonify({'error': 'Contraseña de administrador incorrecta'}), 401
+        
+    tablas_validas = ["valorant", "overwatch", "cs", "valorant_femenino", "fighting"]
+    if division not in tablas_validas:
+        return jsonify({'error': 'División no válida'}), 400
+        
+    try:
+        supabase.table(division).delete().neq('id', -1).execute()
+        return jsonify({'message': f'La base de datos de {division.upper()} ha sido vaciada por completo.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True)
