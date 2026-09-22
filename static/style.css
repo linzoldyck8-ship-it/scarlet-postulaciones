@@ -2,126 +2,146 @@
 
 :root {
     --bg-dark: #0f0f13;
-    --card-bg: rgba(22, 27, 34, 0.90);
+    --card-bg: rgba(22, 27, 34, 0.92);
     --accent-red: #ff4655;
     --accent-hover: #da3633;
     --text-bright: #ffffff;
     --text-sub: #a0a0b0;
-    --border-color: rgba(255, 255, 255, 0.15);
+    --border-color: rgba(255, 255, 255, 0.12);
 }
 
 * {
     box-sizing: border-box;
-    margin: Entendido, tiene todo el sentido. Al eliminar los desplegables se perdió la estructura clara del flujo y la agilidad para revisar la información por área. Además, la imagen debe reaccionar dinámicamente al juego seleccionado para dar feedback visual inmediato.
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+}
 
-Aquí tienes la solución completa para restaurar los desplegables e implementar el cambio dinámico de imagen según el juego seleccionado:
+body {
+    background-color: var(--bg-dark);
+    background-image: linear-gradient(rgba(15, 15, 19, 0.85), rgba(15, 15, 19, 0.95)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--text-bright);
+    min-height: 100vh;
+}
 
----
+a {
+    color: var(--text-bright);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
 
-### 1. Estructura HTML (Con Desplegables e Imagen Dinámica)
+a:hover {
+    color: var(--accent-red);
+}
 
-```html
-<section class="postulacion-container">
-  <!-- Panel Izquierdo: Menús Desplegables (Acordeón) -->
-  <div class="info-panel">
-    <h2>Áreas de Postulación</h2>
-    
-    <details class="acordeon-item" data-game="valorant" open>
-      <summary onclick="cambiarImagenGame('valorant')">
-        <span>🎮 Valorant / Valorant Femenino</span>
-      </summary>
-      <div class="acordeon-content">
-        <p><strong>Requisitos:</strong> Rango Inmortal+, disponibilidad de horarios de Chile, scrims 4 días a la semana.</p>
-        <button class="btn-postular">Postular a Valorant</button>
-      </div>
-    </details>
+/* NAVEGACIÓN SUPERIOR */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 35px;
+    background: rgba(15, 15, 19, 0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--accent-red);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
 
-    <details class="acordeon-item" data-game="overwatch">
-      <summary onclick="cambiarImagenGame('overwatch')">
-        <span>🛡️ Overwatch 2</span>
-      </summary>
-      <div class="acordeon-content">
-        <p><strong>Requisitos:</strong> Top 500 / Grandmaster, comunicación fluida por Discord, compromiso con staff técnico.</p>
-        <button class="btn-postular">Postular a Overwatch</button>
-      </div>
-    </details>
-
-    <details class="acordeon-item" data-game="cs">
-      <summary onclick="cambiarImagenGame('cs')">
-        <span>🎯 Counter-Strike 2</span>
-      </summary>
-      <div class="acordeon-content">
-        <p><strong>Requisitos:</strong> Level 10 Gamers Club / FACEIT 2000+ Elo, experiencia en torneos locales.</p>
-        <button class="btn-postular">Postular a CS2</button>
-      </div>
-    </details>
-  </div>
-
-  <!-- Panel Derecho: Imagen Dinámica -->
-  <div class="media-panel">
-    <img id="game-preview" src="assets/valorant-banner.jpg" alt="Vista previa de división" />
-  </div>
-</section>
-
-    .postulacion-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
+.top-nav .logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 1px;
     color: #fff;
 }
 
-.acordeon-item {
-    background: rgba(26, 26, 26, 0.85);
-    border: 1px solid #333;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    overflow: hidden;
+.top-nav nav a {
+    margin-left: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
 }
 
-.acordeon-item summary {
-    padding: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    list-style: none;
-    background: rgba(34, 34, 34, 0.9);
-    transition: background 0.2s, color 0.2s;
+/* TARJETAS GLASSMORPHISM */
+.form-card, .card {
+    background: var(--card-bg) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    padding: 25px;
+    margin-bottom: 25px;
 }
 
-.acordeon-item summary:hover {
-    background: #2a2a2a;
-    color: #ff4655;
-}
-
-.acordeon-content {
-    padding: 1rem;
-    border-top: 1px solid #333;
-    line-height: 1.5;
-}
-
-.btn-postular {
-    margin-top: 10px;
-    background: #ff4655;
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 5px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-postular:hover {
-    background: #da3633;
-}
-
-.media-panel img {
+/* INPUTS, SELECTS Y BOTONES */
+input, select, textarea {
     width: 100%;
-    height: 100%;
-    max-height: 450px;
-    object-fit: cover;
+    padding: 12px 15px;
+    background: rgba(15, 15, 19, 0.85);
+    color: #ffffff;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    transition: opacity 0.2s ease-in-out;
+    font-size: 0.95rem;
+    margin-top: 6px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--accent-red);
+}
+
+option {
+    background: #161b22;
+    color: #fff;
+}
+
+.btn-primary {
+    display: inline-block;
+    background: var(--accent-red);
+    color: #fff !important;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: background-color 0.3s, transform 0.2s;
+    text-align: center;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+/* TABLAS */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9rem;
+    color: #fff;
+}
+
+th {
+    background: rgba(33, 38, 45, 0.9);
+    padding: 12px 10px;
+    border-bottom: 2px solid var(--accent-red);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+tr:hover td {
+    background: rgba(255, 255, 255, 0.04);
 }
