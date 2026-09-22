@@ -8,85 +8,210 @@
 </head>
 <body>
     <header class="top-nav">
-        <div class="logo">🔥 SCARLET ESPORTS</div>
+        <div class="logo">⚡ SCARLET ESPORTS</div>
         <nav>
             <a href="/">Inicio</a>
-            <a href="/postulaciones" style="color: #ff4655;">Postularme al Roster</a>
+            <a href="/postulaciones" style="color: #ff4655;">🚀 Postularme al Roster</a>
         </nav>
     </header>
 
-    <section class="postulacion-container">
-        <!-- Panel Izquierdo: Menús Desplegables (Acordeón) -->
-        <div class="info-panel">
-            <h2>Áreas de Postulación</h2>
+    <div style="max-width: 1100px; margin: 30px auto; padding: 0 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start;">
             
-            <details class="acordeon-item" data-game="valorant" open>
-                <summary onclick="cambiarImagenGame('valorant')">
-                    <span>🎮 Valorant / Valorant Femenino</span>
-                </summary>
-                <div class="acordeon-content">
-                    <p><strong>Requisitos:</strong> Rango Inmortal+, disponibilidad de horarios de Chile, scrims 4 días a la semana.</p>
-                    <button class="btn-postular">Postular a Valorant</button>
-                </div>
-            </details>
+            <!-- FORMULARIO DE POSTULACIÓN -->
+            <div class="form-card">
+                <h2 style="font-size: 1.6rem; margin-bottom: 5px;">📝 Formulario de Postulación</h2>
+                <p style="color: #a0a0b0; font-size: 0.85rem; margin-bottom: 20px;">Selecciona tu disciplina e ingresa tus datos deportivos.</p>
 
-            <details class="acordeon-item" data-game="overwatch">
-                <summary onclick="cambiarImagenGame('overwatch')">
-                    <span>🛡️ Overwatch 2</span>
-                </summary>
-                <div class="acordeon-content">
-                    <p><strong>Requisitos:</strong> Top 500 / Grandmaster, comunicación fluida por Discord, compromiso con staff técnico.</p>
-                    <button class="btn-postular">Postular a Overwatch</button>
-                </div>
-            </details>
+                <form id="form-postular" onsubmit="enviarPostulacion(event)">
+                    <div style="margin-bottom: 15px;">
+                        <label><b>Seleccionar Juego / División:</b></label>
+                        <select id="select-juego" onchange="actualizarOpcionesJuego()">
+                            <option value="valorant">Valorant</option>
+                            <option value="overwatch">Overwatch 2</option>
+                            <option value="cs">Counter-Strike (CS)</option>
+                            <option value="valorant_femenino">Valorant Femenino</option>
+                            <option value="fighting">Fighting Games</option>
+                        </select>
+                    </div>
 
-            <details class="acordeon-item" data-game="cs">
-                <summary onclick="cambiarImagenGame('cs')">
-                    <span>🎯 Counter-Strike 2</span>
-                </summary>
-                <div class="acordeon-content">
-                    <p><strong>Requisitos:</strong> Level 10 Gamers Club / FACEIT 2000+ Elo, experiencia en torneos locales.</p>
-                    <button class="btn-postular">Postular a CS2</button>
+                    <div style="margin-bottom: 15px;">
+                        <label><b>ID de Jugador (Riot ID / Battletag / Steam):</b></label>
+                        <input type="text" id="player_id" placeholder="Ej: ScarletPlayer#LAN" required>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label><b>Contacto (Discord / WhatsApp):</b></label>
+                        <input type="text" id="contacto" placeholder="Ej: discord_user#1234" required>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label><b>Edad:</b></label>
+                        <input type="number" id="edad" value="18" min="13" max="99" required>
+                    </div>
+
+                    <!-- DESPLEGABLES DINÁMICOS DE ROL Y RANGO -->
+                    <div style="margin-bottom: 15px;">
+                        <label><b>Rol Principal:</b></label>
+                        <select id="select-rol">
+                            <!-- Opciones cargadas por JS -->
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label><b>Rango Actual:</b></label>
+                        <select id="select-rango">
+                            <!-- Opciones cargadas por JS -->
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label><b>Peak Elo (Máximo Rango Alcanzado):</b></label>
+                        <input type="text" id="peak_elo" placeholder="Ej: Radiant / Top 500 / Level 10 FACEIT">
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label><b>Historial de Baneos / Sanciones:</b></label>
+                        <input type="text" id="baneos" value="Limpio" placeholder="Indica 'Limpio' o detalla la razón">
+                    </div>
+
+                    <!-- Campos extra para Fighting Games -->
+                    <div id="extra-fighting" style="display: none; margin-bottom: 15px;">
+                        <label><b>Juego Específico:</b></label>
+                        <input type="text" id="juego_especifico" placeholder="Ej: Street Fighter 6 / Tekken 8">
+                        <label style="margin-top: 10px; display: block;"><b>Personaje Principal (Main):</b></label>
+                        <input type="text" id="personaje" placeholder="Ej: Ken / Jin Kazama">
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="width: 100%;">Enviar Postulación</button>
+                </form>
+            </div>
+
+            <!-- PANEL LATERAL DE VISTA PREVIA DEL JUEGO -->
+            <div>
+                <div class="form-card" style="text-align: center;">
+                    <img id="game-preview-img" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920" style="width: 100%; height: 260px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                    <h3 id="game-preview-title" style="color: #ff4655;">VALORANT</h3>
+                    <p id="game-preview-desc" style="color: #a0a0b0; font-size: 0.9rem; margin-top: 8px; line-height: 1.5;">
+                        Buscamos jugadores competitivos con comunicación limpia, disciplina táctica y alta disponibilidad para scrims y torneos oficiales.
+                    </p>
                 </div>
-            </details>
+            </div>
+
         </div>
+    </div>
 
-        <!-- Panel Derecho: Imagen Dinámica -->
-        <div class="media-panel">
-            <img id="game-preview" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920" alt="Vista previa de división" />
-        </div>
-    </section>
-
-    <!-- Script de lógica JavaScript -->
     <script>
-        const imagenesJuegos = {
-            valorant: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920',
-            overwatch: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1920',
-            cs: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=1920',
-            fighting: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1920'
+        const datosJuegos = {
+            "valorant": {
+                titulo: "VALORANT",
+                img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920",
+                desc: "Requisitos: Rango Ascendente o superior, micrófono en óptimo estado y disponibilidad de horarios en Chile.",
+                roles: ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex / IGL"],
+                rangos: ["Ascendente 1-3", "Inmortal 1-3", "Radiante"]
+            },
+            "overwatch": {
+                titulo: "OVERWATCH 2",
+                img: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1920",
+                desc: "Requisitos: Rango Máster o Gran Maestro, dominio del meta actual y disciplina de equipo en Discord.",
+                roles: ["Tanque", "DPS Hitscan", "DPS Projectile", "Support Principal", "Support Flex"],
+                rangos: ["Diamante", "Master", "Grandmaster", "Top 500"]
+            },
+            "cs": {
+                titulo: "COUNTER-STRIKE 2",
+                img: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=1920",
+                desc: "Requisitos: Level 8+ FACEIT o Gamers Club, amplio conocimiento de utilidades y comunicación concisa.",
+                roles: ["Entry Fragger", "AWPer", "Rifler", "Lurker", "IGL"],
+                rangos: ["Global Elite / Premier 15k+", "FACEIT Level 8-10", "Gamers Club Nivel 15+"]
+            },
+            "valorant_femenino": {
+                titulo: "VALORANT FEMENINO",
+                img: "https://images.unsplash.com/photo-1560253023-3ec5d502959f?q=80&w=1920",
+                desc: "Requisitos Roster Femenino Game Changers: Rango Diamante+, espíritu de superación y compromiso con los entrenamientos.",
+                roles: ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex / IGL"],
+                rangos: ["Diamante 1-3", "Ascendente 1-3", "Inmortal / Radiante"]
+            },
+            "fighting": {
+                titulo: "FIGHTING GAMES",
+                img: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1920",
+                desc: "Requisitos: Participación activa en torneos online/presenciales y constante análisis de matchup.",
+                roles: ["Main Player", "Flex Fighter"],
+                rangos: ["Master / High Rank", "Legend", "Top Regional"]
+            }
         };
 
-        function cambiarImagenGame(juego) {
-            const imgElement = document.getElementById('game-preview');
-            
-            if (imagenesJuegos[juego]) {
-                imgElement.style.opacity = '0.3';
-                setTimeout(() => {
-                    imgElement.src = imagenesJuegos[juego];
-                    imgElement.style.opacity = '1';
-                }, 150);
+        function actualizarOpcionesJuego() {
+            const div = document.getElementById('select-juego').value;
+            const info = datosJuegos[div];
+
+            // Actualizar vista previa lateral y fondo de pantalla
+            document.getElementById('game-preview-img').src = info.img;
+            document.getElementById('game-preview-title').innerText = info.titulo;
+            document.getElementById('game-preview-desc').innerText = info.desc;
+            document.body.style.backgroundImage = `linear-gradient(rgba(15, 15, 19, 0.85), rgba(15, 15, 19, 0.95)), url('${info.img}')`;
+
+            // Actualizar selector de roles
+            const selectRol = document.getElementById('select-rol');
+            selectRol.innerHTML = '';
+            info.roles.forEach(rol => {
+                selectRol.innerHTML += `<option value="${rol}">${rol}</option>`;
+            });
+
+            // Actualizar selector de rangos
+            const selectRango = document.getElementById('select-rango');
+            selectRango.innerHTML = '';
+            info.rangos.forEach(rango => {
+                selectRango.innerHTML += `<option value="${rango}">${rango}</option>`;
+            });
+
+            // Mostrar/Ocultar campos de fighting games
+            const extraFighting = document.getElementById('extra-fighting');
+            if (div === 'fighting') {
+                extraFighting.style.display = 'block';
+            } else {
+                extraFighting.style.display = 'none';
             }
         }
 
-        document.querySelectorAll('.acordeon-item').forEach(item => {
-            item.addEventListener('toggle', () => {
-                if (item.open) {
-                    document.querySelectorAll('.acordeon-item').forEach(other => {
-                        if (other !== item) other.removeAttribute('open');
-                    });
+        async function enviarPostulacion(event) {
+            event.preventDefault();
+            const div = document.getElementById('select-juego').value;
+
+            const payload = {
+                player_id: document.getElementById('player_id').value,
+                contacto: document.getElementById('contacto').value,
+                edad: document.getElementById('edad').value,
+                rol: document.getElementById('select-rol').value,
+                rango_actual: document.getElementById('select-rango').value,
+                peak_elo: document.getElementById('peak_elo').value,
+                baneos: document.getElementById('baneos').value,
+                juego_especifico: document.getElementById('juego_especifico')?.value || '',
+                personaje: document.getElementById('personaje')?.value || ''
+            };
+
+            try {
+                const res = await fetch(`/api/postular/${div}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('🎉 ' + (data.message || 'Postulación enviada con éxito.'));
+                    document.getElementById('form-postular').reset();
+                    actualizarOpcionesJuego();
+                } else {
+                    alert('⚠️ ' + (data.error || 'Error al enviar la postulación.'));
                 }
-            });
-        });
+            } catch (err) {
+                alert('❌ Error de conexión con el servidor.');
+            }
+        }
+
+        window.onload = () => {
+            actualizarOpcionesJuego();
+        };
     </script>
 </body>
 </html>
