@@ -15,7 +15,7 @@
         </nav>
     </header>
 
-    <div class="container" style="max-width: 1200px;">
+    <div class="container" style="max-width: 1200px; padding-bottom: 40px;">
         <div class="header-title" style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h1>📊 Gestión de Rosters y Postulaciones</h1>
@@ -43,114 +43,12 @@
 
         <!-- Tabla de Postulantes -->
         <div class="form-card">
-            <h3 id="titulo-tabla">Postulantes: Valorant</h3>
-            <div style="overflow-x: auto; margin-top: 15px;">
-                <table id="tabla-postulantes" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
-                    <thead>
-                        <tr style="background: #21262d; border-bottom: 2px solid #ff4655;">
-                            <th style="padding: 10px;">ID / Jugador</th>
-                            <th style="padding: 10px;">Contacto</th>
-                            <th style="padding: 10px;">Edad</th>
-                            <th style="padding: 10px;">Rol / Rango</th>
-                            <th style="padding: 10px;">Peak Elo</th>
-                            <th style="padding: 10px;">Estado</th>
-                            <th style="padding: 10px;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-postulantes">
-                        <!-- Datos cargados por JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+            <h3 idPara poder ayudarte a actualizar tu panel gerencial, **¿qué funcionalidades o cambios específicos necesitas agregar?**
 
-    <script>
-        const divisionesDisponibles = ["valorant", "overwatch", "cs", "valorant_femenino", "fighting"];
+Dime cuáles de los siguientes puntos (o cualquier otro) quieres implementar:
 
-        async function cargarConfiguracionEstado() {
-            try {
-                const res = await fetch('/api/configuracion');
-                const data = await res.json();
-                const contenedor = document.getElementById('controles-estado');
-                contenedor.innerHTML = '';
-
-                divisionesDisponibles.forEach(div => {
-                    const clave = `estado_${div}`;
-                    const configItem = data.find(item => item.clave === clave);
-                    const estadoActual = configItem ? configItem.valor : 'abierta';
-                    const esAbierta = estadoActual === 'abierta';
-
-                    contenedor.innerHTML += `
-                        <div style="background: #21262d; padding: 10px 15px; border-radius: 6px; border: 1px solid #30363d;">
-                            <span style="text-transform: capitalize; font-weight: bold;">${div.replace('_', ' ')}:</span> 
-                            <span style="color: ${esAbierta ? '#2ea043' : '#ff4655'};">${estadoActual.toUpperCase()}</span>
-                            <button onclick="cambiarEstadoConvocatoria('${clave}', '${esAbierta ? 'cerrada' : 'abierta'}')" style="margin-left: 10px; padding: 2px 8px; background: ${esAbierta ? '#da3633' : '#238636'}; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
-                                ${esAbierta ? 'Cerrar' : 'Abrir'}
-                            </button>
-                        </div>
-                    `;
-                });
-            } catch(e) { console.error(e); }
-        }
-
-        async function cambiarEstadoConvocatoria(clave, nuevoValor) {
-            await fetch('/api/configuracion', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ clave: clave, valor: nuevoValor })
-            });
-            cargarConfiguracionEstado();
-        }
-
-        async function cargarDatosDivision() {
-            const div = document.getElementById('select-division').value;
-            document.getElementById('titulo-tabla').innerText = `Postulantes: ${div.toUpperCase()}`;
-            
-            try {
-                // Endpoint para obtener postulantes de la tabla correspondiente
-                const res = await fetch(`/api/admin/obtener/${div}`);
-                const data = await res.json();
-                const tbody = document.getElementById('tbody-postulantes');
-                tbody.innerHTML = '';
-
-                if(!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #8b949e;">No hay postulaciones registradas en esta división.</td></tr>`;
-                    return;
-                }
-
-                data.forEach(row => {
-                    tbody.innerHTML += `
-                        <tr style="border-bottom: 1px solid #30363d;">
-                            <td style="padding: 10px;"><b>${row.player_id}</b></td>
-                            <td style="padding: 10px;">${row.contacto}</td>
-                            <td style="padding: 10px;">${row.edad}</td>
-                            <td style="padding: 10px;">${row.rol || '-'} <br><small style="color: #8b949e;">${row.rango_actual}</small></td>
-                            <td style="padding: 10px;">${row.peak_elo}</td>
-                            <td style="padding: 10px;"><span style="padding: 3px 8px; border-radius: 4px; background: ${row.estado === 'Aceptado' ? '#238636' : row.estado === 'Rechazado' ? '#da3633' : '#1f6feb'}; color:#fff;">${row.estado}</span></td>
-                            <td style="padding: 10px;">
-                                <button onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Aceptado')" style="background:#238636; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Aceptar</button>
-                                <button onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Rechazado')" style="background:#da3633; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-left:4px;">Rechazar</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } catch(e) { console.error(e); }
-        }
-
-        async function actualizarEstadoPostulante(div, id, nuevoEstado) {
-            await fetch(`/api/admin/actualizar_estado`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ division: div, id: id, estado: nuevoEstado })
-            });
-            cargarDatosDivision();
-        }
-
-        window.onload = () => {
-            cargarConfiguracionEstado();
-            cargarDatosDivision();
-        };
-    </script>
-</body>
-</html>
+1. **Nuevos campos en la tabla** (ej. Tracker link, país, disponibilidad horaria, observaciones/notas del admin).
+2. **Filtros y Búsqueda** (ej. buscar por ID/nombre, filtrar por estado "Pendiente/Aceptado/Rechazado" o por Rango).
+3. **Acciones adicionales** (ej. botón para eliminar postulación, exportar datos a CSV/Excel, ver perfil detallado en un modal).
+4. **Mejoras de UI/Diseño** (ej. badges de color por rango, confirmación al aceptar/rechazar, notificaciones toast).
+5. **Integración con backend** (ej. envío de webhook a Discord o correo automático al aceptar/rechazar).
