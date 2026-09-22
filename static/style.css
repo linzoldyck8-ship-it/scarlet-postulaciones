@@ -19,7 +19,7 @@
 
 body {
     background-color: var(--bg-dark);
-    background-image: linear-gradient(rgba(15, 15, 19, 0.85), rgba(15, 15, 19, 0.95)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920');
+    background-image: linear-gradient(rgba(15, 15, 19, 0.85), rgba(15, 15, 19, 0.95)), url('https://i.pinimg.com/736x/83/6f/c6/836fc68807377a95d257d6ce0a0e189b.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
