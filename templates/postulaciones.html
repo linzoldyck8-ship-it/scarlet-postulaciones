@@ -18,73 +18,86 @@
     <div style="max-width: 1100px; margin: 30px auto; padding: 0 20px;">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start;">
             
-            <!-- FORMULARIO DE POSTULACIÓN -->
+            <!-- SECCIÓN DEL FORMULARIO -->
             <div class="form-card">
                 <h2 style="font-size: 1.6rem; margin-bottom: 5px;">📝 Formulario de Postulación</h2>
                 <p style="color: #a0a0b0; font-size: 0.85rem; margin-bottom: 20px;">Selecciona tu disciplina e ingresa tus datos deportivos.</p>
 
+                <!-- Selector de Juego (Siempre visible para poder cambiar de división) -->
+                <div style="margin-bottom: 20px;">
+                    <label><b>Seleccionar Juego / División:</b></label>
+                    <select id="select-juego" onchange="actualizarOpcionesJuego()">
+                        <option value="valorant">Valorant</option>
+                        <option value="overwatch">Overwatch 2</option>
+                        <option value="cs">Counter-Strike (CS)</option>
+                        <option value="valorant_femenino">Valorant Femenino</option>
+                        <option value="fighting">Fighting Games</option>
+                    </select>
+                </div>
+
+                <!-- AVISO DE CONVOCATORIA CERRADA (Oculto por defecto) -->
+                <div id="mensaje-cerrado" style="display: none; text-align: center; padding: 30px 20px; background: rgba(218, 54, 51, 0.15); border: 1px solid #da3633; border-radius: 10px; margin-top: 10px;">
+                    <h3 style="color: #ff4655; margin-bottom: 10px; font-size: 1.3rem;">🚫 CONVOCATORIA CERRADA</h3>
+                    <p style="color: #f0f0f5; font-size: 0.95rem; line-height: 1.5;">
+                        Las postulaciones para esta división están cerradas hasta nuevo aviso.<br>
+                        <span style="color: #a0a0b0; font-size: 0.85rem;">Sigue nuestras redes sociales para estar al tanto de futuras aperturas de roster.</span>
+                    </p>
+                </div>
+
+                <!-- CONTENEDOR DE CAMPOS (Se oculta cuando la división está cerrada) -->
                 <form id="form-postular" onsubmit="enviarPostulacion(event)">
-                    <div style="margin-bottom: 15px;">
-                        <label><b>Seleccionar Juego / División:</b></label>
-                        <select id="select-juego" onchange="actualizarOpcionesJuego()">
-                            <option value="valorant">Valorant</option>
-                            <option value="overwatch">Overwatch 2</option>
-                            <option value="cs">Counter-Strike (CS)</option>
-                            <option value="valorant_femenino">Valorant Femenino</option>
-                            <option value="fighting">Fighting Games</option>
-                        </select>
-                    </div>
+                    <div id="contenedor-campos">
+                        <div style="margin-bottom: 15px;">
+                            <label><b>ID de Jugador (Riot ID / Battletag / Steam):</b></label>
+                            <input type="text" id="player_id" placeholder="Ej: ScarletPlayer#LAN" required>
+                        </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label><b>ID de Jugador (Riot ID / Battletag / Steam):</b></label>
-                        <input type="text" id="player_id" placeholder="Ej: ScarletPlayer#LAN" required>
-                    </div>
+                        <div style="margin-bottom: 15px;">
+                            <label><b>Contacto (Discord / WhatsApp):</b></label>
+                            <input type="text" id="contacto" placeholder="Ej: discord_user#1234" required>
+                        </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label><b>Contacto (Discord / WhatsApp):</b></label>
-                        <input type="text" id="contacto" placeholder="Ej: discord_user#1234" required>
-                    </div>
+                        <div style="margin-bottom: 15px;">
+                            <label><b>Edad:</b></label>
+                            <input type="number" id="edad" value="18" min="13" max="99" required>
+                        </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label><b>Edad:</b></label>
-                        <input type="number" id="edad" value="18" min="13" max="99" required>
-                    </div>
+                        <div style="margin-bottom: 15px;">
+                            <label><b>Rol Principal:</b></label>
+                            <select id="select-rol">
+                                <!-- Opciones cargadas por JS -->
+                            </select>
+                        </div>
 
-                    <!-- DESPLEGABLES DINÁMICOS DE ROL Y RANGO -->
-                    <div style="margin-bottom: 15px;">
-                        <label><b>Rol Principal:</b></label>
-                        <select id="select-rol">
-                            <!-- Opciones cargadas por JS -->
-                        </select>
-                    </div>
+                        <div style="margin-bottom: 15px;">
+                            <label><b>Rango Actual:</b></label>
+                            <select id="select-rango">
+                                <!-- Opciones cargadas por JS -->
+                            </select>
+                        </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label><b>Rango Actual:</b></label>
-                        <select id="select-rango">
-                            <!-- Opciones cargadas por JS -->
-                        </select>
-                    </div>
+                        <div style="margin-bottom: 15px;">
+                            <label><b>Peak Elo (Máximo Rango Alcanzado):</b></label>
+                            <input type="text" id="peak_elo" placeholder="Ej: Radiant / Top 500 / Level 10 FACEIT">
+                        </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label><b>Peak Elo (Máximo Rango Alcanzado):</b></label>
-                        <input type="text" id="peak_elo" placeholder="Ej: Radiant / Top 500 / Level 10 FACEIT">
-                    </div>
+                        <div style="margin-bottom: 20px;">
+                            <label><b>Historial de Baneos / Sanciones:</b></label>
+                            <input type="text" id="baneos" value="Limpio" placeholder="Indica 'Limpio' o detalla la razón">
+                        </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <label><b>Historial de Baneos / Sanciones:</b></label>
-                        <input type="text" id="baneos" value="Limpio" placeholder="Indica 'Limpio' o detalla la razón">
-                    </div>
+                        <!-- Campos extra para Fighting Games -->
+                        <div id="extra-fighting" style="display: none; margin-bottom: 15px;">
+                            <label><b>Juego Específico:</b></label>
+                            <input type="text" id="juego_especifico" placeholder="Ej: Street Fighter 6 / Tekken 8">
+                            <label style="margin-top: 10px; display: block;"><b>Personaje Principal (Main):</b></label>
+                            <input type="text" id="personaje" placeholder="Ej: Ken / Jin Kazama">
+                        </div>
 
-                    <!-- Campos extra para Fighting Games -->
-                    <div id="extra-fighting" style="display: none; margin-bottom: 15px;">
-                        <label><b>Juego Específico:</b></label>
-                        <input type="text" id="juego_especifico" placeholder="Ej: Street Fighter 6 / Tekken 8">
-                        <label style="margin-top: 10px; display: block;"><b>Personaje Principal (Main):</b></label>
-                        <input type="text" id="personaje" placeholder="Ej: Ken / Jin Kazama">
+                        <button type="submit" class="btn-primary" style="width: 100%;">Enviar Postulación</button>
                     </div>
-
-                    <button type="submit" class="btn-primary" style="width: 100%;">Enviar Postulación</button>
                 </form>
+
             </div>
 
             <!-- PANEL LATERAL DE VISTA PREVIA DEL JUEGO -->
@@ -102,74 +115,108 @@
     </div>
 
     <script>
+        // Almacena la configuración de estados (abierta/cerrada)
+        let estadosConvocatorias = {};
+
         const datosJuegos = {
             "valorant": {
                 titulo: "VALORANT",
-                img: "https://i.pinimg.com/1200x/2a/c5/9f/2ac59fa5a3722e2cd8ddf9c430120016.jpg",
-                desc: "Requisitos lado A: Rango Ascendente o superior, micrófono en óptimo estado y disponibilidad de horarios en Chile. Requisitos lado B: Rango Plata o superior , micrófono en óptimo estado y disponibilidad de horarios en Chile.",
+                img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920",
+                desc: "Requisitos: Rango Ascendente o superior, micrófono en óptimo estado y disponibilidad de horarios en Chile.",
                 roles: ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex / IGL"],
                 rangos: ["Ascendente 1-3", "Inmortal 1-3", "Radiante"]
             },
             "overwatch": {
                 titulo: "OVERWATCH 2",
-                img: "https://i.pinimg.com/1200x/ff/ec/94/ffec949ffdc2ace8d352323ca6702d00.jpg",
+                img: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1920",
                 desc: "Requisitos: Rango Máster o Gran Maestro, dominio del meta actual y disciplina de equipo en Discord.",
                 roles: ["Tanque", "DPS Hitscan", "DPS Projectile", "Support Principal", "Support Flex"],
                 rangos: ["Diamante", "Master", "Grandmaster", "Top 500"]
             },
             "cs": {
                 titulo: "COUNTER-STRIKE 2",
-                img: "https://i.pinimg.com/736x/6c/7c/e1/6c7ce194a1a705fe896bff0bf68bcd38.jpg",
+                img: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=1920",
                 desc: "Requisitos: Level 8+ FACEIT o Gamers Club, amplio conocimiento de utilidades y comunicación concisa.",
                 roles: ["Entry Fragger", "AWPer", "Rifler", "Lurker", "IGL"],
                 rangos: ["Global Elite / Premier 15k+", "FACEIT Level 8-10", "Gamers Club Nivel 15+"]
             },
             "valorant_femenino": {
                 titulo: "VALORANT FEMENINO",
-                img: "https://i.pinimg.com/1200x/2a/c5/9f/2ac59fa5a3722e2cd8ddf9c430120016.jpg",
-                desc: "Requisitos Roster Femenino: Rango Diamante o superior, espíritu de superación y compromiso con los entrenamientos.",
+                img: "https://images.unsplash.com/photo-1560253023-3ec5d502959f?q=80&w=1920",
+                desc: "Requisitos Roster Femenino Game Changers: Rango Diamante+, espíritu de superación y compromiso con los entrenamientos.",
                 roles: ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex / IGL"],
                 rangos: ["Diamante 1-3", "Ascendente 1-3", "Inmortal / Radiante"]
             },
             "fighting": {
                 titulo: "FIGHTING GAMES",
-                img: "https://i.pinimg.com/1200x/2f/27/6b/2f276b51ce433ffc37242d3426b0ad91.jpg",
+                img: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1920",
                 desc: "Requisitos: Participación activa en torneos online/presenciales y constante análisis de matchup.",
                 roles: ["Main Player", "Flex Fighter"],
                 rangos: ["Master / High Rank", "Legend", "Top Regional"]
             }
         };
 
+        // Consulta la API para saber qué divisiones están abiertas y cuáles cerradas
+        async function cargarConfiguracionInicial() {
+            try {
+                const res = await fetch('/api/configuracion');
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    data.forEach(item => {
+                        estadosConvocatorias[item.clave] = item.valor;
+                    });
+                }
+            } catch (err) {
+                console.error("Error cargando configuración:", err);
+            }
+            actualizarOpcionesJuego();
+        }
+
         function actualizarOpcionesJuego() {
             const div = document.getElementById('select-juego').value;
             const info = datosJuegos[div];
 
-            // Actualizar vista previa lateral y fondo de pantalla
+            // 1. Actualizar imagen de fondo y tarjeta lateral
             document.getElementById('game-preview-img').src = info.img;
             document.getElementById('game-preview-title').innerText = info.titulo;
             document.getElementById('game-preview-desc').innerText = info.desc;
             document.body.style.backgroundImage = `linear-gradient(rgba(15, 15, 19, 0.85), rgba(15, 15, 19, 0.95)), url('${info.img}')`;
 
-            // Actualizar selector de roles
-            const selectRol = document.getElementById('select-rol');
-            selectRol.innerHTML = '';
-            info.roles.forEach(rol => {
-                selectRol.innerHTML += `<option value="${rol}">${rol}</option>`;
-            });
+            // 2. Comprobar si la convocatoria está cerrada
+            const estadoDivision = estadosConvocatorias[`estado_${div}`] || 'abierta';
+            const contenedorCampos = document.getElementById('contenedor-campos');
+            const mensajeCerrado = document.getElementById('mensaje-cerrado');
 
-            // Actualizar selector de rangos
-            const selectRango = document.getElementById('select-rango');
-            selectRango.innerHTML = '';
-            info.rangos.forEach(rango => {
-                selectRango.innerHTML += `<option value="${rango}">${rango}</option>`;
-            });
-
-            // Mostrar/Ocultar campos de fighting games
-            const extraFighting = document.getElementById('extra-fighting');
-            if (div === 'fighting') {
-                extraFighting.style.display = 'block';
+            if (estadoDivision === 'cerrada') {
+                // Ocultar formulario y mostrar mensaje de cerrado
+                contenedorCampos.style.display = 'none';
+                mensajeCerrado.style.display = 'block';
             } else {
-                extraFighting.style.display = 'none';
+                // Mostrar formulario y ocultar mensaje de cerrado
+                contenedorCampos.style.display = 'block';
+                mensajeCerrado.style.display = 'none';
+
+                // Actualizar roles dinámicos
+                const selectRol = document.getElementById('select-rol');
+                selectRol.innerHTML = '';
+                info.roles.forEach(rol => {
+                    selectRol.innerHTML += `<option value="${rol}">${rol}</option>`;
+                });
+
+                // Actualizar rangos dinámicos
+                const selectRango = document.getElementById('select-rango');
+                selectRango.innerHTML = '';
+                info.rangos.forEach(rango => {
+                    selectRango.innerHTML += `<option value="${rango}">${rango}</option>`;
+                });
+
+                // Mostrar/ocultar campos específicos de fighting games
+                const extraFighting = document.getElementById('extra-fighting');
+                if (div === 'fighting') {
+                    extraFighting.style.display = 'block';
+                } else {
+                    extraFighting.style.display = 'none';
+                }
             }
         }
 
@@ -210,7 +257,7 @@
         }
 
         window.onload = () => {
-            actualizarOpcionesJuego();
+            cargarConfiguracionInicial();
         };
     </script>
 </body>
