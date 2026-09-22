@@ -5,126 +5,264 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Gerencial - Scarlet Esports</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .btn-action {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-right: 4px;
+            color: #fff;
+            font-weight: 500;
+        }
+        .btn-aceptar { background: #238636; }
+        .btn-rechazar { background: #d9534f; }
+        .btn-blacklist { background: #b02a37; }
+        .btn-eliminar { background: #6c757d; }
+        .btn-aceptar:hover { background: #2ea043; }
+        .btn-rechazar:hover { background: #c9302c; }
+        .btn-blacklist:hover { background: #842029; }
+        .btn-eliminar:hover { background: #5c636a; }
+    </style>
 </head>
 <body>
-    <header class="top-nav">Código JavaScript necesario para renderizar y actualizar dinámicamente el **Control de Convocatorias** y la tabla de **Aspirantes / Postulaciones** según la división seleccionada:
+    <header class="top-nav">
+        <div class="logo">🛠️ PANEL GERENCIAL - SCARLET</div>
+        <nav>
+            <a href="/" target="_blank">Ver Sitio Web</a>
+            <a href="/admin/logout" style="color: #ff4655;">Cerrar Sesión</a>
+        </nav>
+    </header>
 
-```html
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const selectDivision = document.querySelector('select'); // O usa document.getElementById('tu-id-select')
-  const cardConvocatorias = document.querySelectorAll('.card, div[class*="bg-"], div')[0]; // Contenedor de Control de Convocatorias
-  const cardPostulaciones = document.querySelectorAll('.card, div[class*="bg-"], div')[1]; // Segundo contenedor vacío
-
-  // Función para renderizar el contenido dinámico
-  async function cargarDatosDivision(division) {
-    // 1. Estructura y estado para "Control de Convocatorias"
-    const contenedorConvocatorias = document.querySelector('#contenedor-convocatorias') || document.querySelector('.card:first-of-type');
-    if (contenedorConvocatorias) {
-      contenedorConvocatorias.innerHTML = `
-        <div class="p-3">
-          <h5 class="mb-3">🚦 Control de Convocatorias (${division})</h5>
-          <div class="d-flex align-items-center justify-content-between bg-dark p-3 rounded border border-secondary">
+    <div class="container" style="max-width: 1200px; padding: 20px;">
+        <div class="header-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div>
-              <p class="m-0 fw-bold">Estado de postulación:</p>
-              <small class="text-muted">Permite o bloquea el envío de nuevos formularios</small>
+                <h1>📊 Gestión de Rosters y Postulaciones</h1>
+                <p>Administra los aspirantes y controla el estado de las convocatorias.</p>
             </div>
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" id="switchConvocatoria" checked>
-              <label class="form-check-label text-success fw-bold" id="labelEstado">Abiertas</label>
+            <div>
+                <label><b>Seleccionar División:</b></label>
+                <select id="select-division" onchange="cargarDatosDivision()" style="padding: 8px; background: #161b22; color: #fff; border: 1px solid #30363d; border-radius: 6px;">
+                    <option value="valorant">Valorant</option>
+                    <option value="overwatch">Overwatch</option>
+                    <option value="cs">Counter-Strike (CS)</option>
+                    <option value="valorant_femenino">Valorant Femenino</option>
+                    <option value="fighting">Fighting Games</option>
+                </select>
             </div>
-          </div>
         </div>
-      `;
 
-      // Event listener para el switch de convocatorias
-      const switchBtn = document.getElementById('switchConvocatoria');
-      const labelEstado = document.getElementById('labelEstado');
-      if (switchBtn) {
-        switchBtn.addEventListener('change', (e) => {
-          if (e.target.checked) {
-            labelEstado.textContent = 'Abiertas';
-            labelEstado.className = 'form-check-label text-success fw-bold';
-          } else {
-            labelEstado.textContent = 'Cerradas';
-            labelEstado.className = 'form-check-label text-danger fw-bold';
-          }
-        });
-      }
-    }
-
-    // 2. Estructura y tabla para la sección de Postulaciones / Rosters
-    const contenedorPostulaciones = document.querySelector('#contenedor-postulaciones') || document.querySelectorAll('.card')[1];
-    if (contenedorPostulaciones) {
-      contenedorPostulaciones.innerHTML = `
-        <div class="p-3">
-          <h5 class="mb-3">📋 Aspirantes y Postulados - ${division}</h5>
-          <div class="table-responsive">
-            <table class="table table-dark table-hover align-middle">
-              <thead>
-                <tr>
-                  <th>Usuario</th>
-                  <th>Rol / Rango</th>
-                  <th>Fecha</th>
-                  <th>Estado</th>
-                  <th class="text-end">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tablaAspirantes">
-                <tr>
-                  <td colspan="5" class="text-center text-muted py-3">Cargando postulaciones de ${division}...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <!-- Panel de Control de Estados (Abrir/Cerrar Convocatoria) -->
+        <div class="form-card" style="margin-bottom: 25px; padding: 15px 20px; background: #161b22; border-radius: 8px; border: 1px solid #30363d;">
+            <h3>🚦 Control de Convocatorias</h3>
+            <div id="controles-estado" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
+                <!-- Cargado dinámicamente -->
+            </div>
         </div>
-      `;
 
-      // Simulación o petición a backend (fetch API)
-      obtenerAspirantesBackend(division);
-    }
-  }
+        <!-- Tabla de Postulantes de la División Seleccionada -->
+        <div class="form-card" style="background: #161b22; padding: 20px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 25px;">
+            <h3 id="titulo-tabla">Postulantes: Valorant</h3>
+            <div style="overflow-x: auto; margin-top: 15px;">
+                <table id="tabla-postulantes" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; color: #fff;">
+                    <thead>
+                        <tr style="background: #21262d; border-bottom: 2px solid #ff4655;">
+                            <th style="padding: 10px;">ID / Jugador</th>
+                            <th style="padding: 10px;">Contacto</th>
+                            <th style="padding: 10px;">Edad</th>
+                            <th style="padding: 10px;">Rol / Rango</th>
+                            <th style="padding: 10px;">Peak Elo</th>
+                            <th style="padding: 10px;">Estado</th>
+                            <th style="padding: 10px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-postulantes">
+                        <!-- Cargado dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-  // Petición de datos (reemplazar la URL por tu API o base de datos)
-  async function obtenerAspirantesBackend(division) {
-    const tabla = document.getElementById('tablaAspirantes');
-    
-    try {
-      /* 
-      // Ejemplo de conexión real:
-      const response = await fetch(`/api/postulaciones?division=${division}`);
-      const data = await response.json();
-      */
+        <!-- Tabla de Lista Negra (Blacklist) -->
+        <div class="form-card" style="background: #161b22; padding: 20px; border-radius: 8px; border: 1px solid #30363d;">
+            <h3 style="color: #ff4655;">⛔ Lista Negra (Blacklist)</h3>
+            <p style="font-size: 0.85rem; color: #8b949e; margin-bottom: 10px;">Jugadores bloqueados para futuras convocatorias.</p>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; color: #fff;">
+                    <thead>
+                        <tr style="background: #21262d; border-bottom: 2px solid #ff4655;">
+                            <th style="padding: 10px;">ID Jugador</th>
+                            <th style="padding: 10px;">Contacto</th>
+                            <th style="padding: 10px;">Motivo</th>
+                            <th style="padding: 10px;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-blacklist">
+                        <!-- Cargado dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-      // Datos de prueba para previsualización
-      setTimeout(() => {
-        tabla.innerHTML = `
-          <tr>
-            <td><strong>PlayerOne#1234</strong></td>
-            <td>Radiant / Duelista</td>
-            <td>22/09/2026</td>
-            <td><span class="badge bg-warning text-dark">Pendiente</span></td>
-            <td class="text-end">
-              <button class="btn btn-sm btn-outline-success">Aceptar</button>
-              <button class="btn btn-sm btn-outline-danger">Rechazar</button>
-            </td>
-          </tr>
-        `;
-      }, 400);
+    <script>
+        const divisionesDisponibles = ["valorant", "overwatch", "cs", "valorant_femenino", "fighting"];
 
-    } catch (error) {
-      tabla.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error al cargar datos.</td></tr>`;
-    }
-  }
+        // Cargar controles de Abrir/Cerrar convocatorias
+        async function cargarConfiguracionEstado() {
+            try {
+                const res = await fetch('/api/configuracion');
+                const data = await res.json();
+                const contenedor = document.getElementById('controles-estado');
+                contenedor.innerHTML = '';
 
-  // Listener para el selector de división
-  if (selectDivision) {
-    selectDivision.addEventListener('change', (e) => {
-      cargarDatosDivision(e.target.value);
-    });
+                divisionesDisponibles.forEach(div => {
+                    const clave = `estado_${div}`;
+                    const configItem = Array.isArray(data) ? data.find(item => item.clave === clave) : null;
+                    const estadoActual = configItem ? configItem.valor : 'abierta';
+                    const esAbierta = estadoActual === 'abierta';
 
-    // Carga inicial según el valor por defecto
-    cargarDatosDivision(selectDivision.value);
-  }
-});
-</script>
+                    contenedor.innerHTML += `
+                        <div style="background: #21262d; padding: 10px 15px; border-radius: 6px; border: 1px solid #30363d;">
+                            <span style="text-transform: capitalize; font-weight: bold;">${div.replace('_', ' ')}:</span> 
+                            <span style="color: ${esAbierta ? '#2ea043' : '#ff4655'};">${estadoActual.toUpperCase()}</span>
+                            <button onclick="cambiarEstadoConvocatoria('${clave}', '${esAbierta ? 'cerrada' : 'abierta'}')" style="margin-left: 10px; padding: 2px 8px; background: ${esAbierta ? '#da3633' : '#238636'}; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
+                                ${esAbierta ? 'Cerrar' : 'Abrir'}
+                            </button>
+                        </div>
+                    `;
+                });
+            } catch(e) { console.error("Error al cargar configuración:", e); }
+        }
+
+        async function cambiarEstadoConvocatoria(clave, nuevoValor) {
+            await fetch('/api/configuracion', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ clave: clave, valor: nuevoValor })
+            });
+            cargarConfiguracionEstado();
+        }
+
+        // Cargar tabla de postulantes según la división seleccionada
+        async function cargarDatosDivision() {
+            const div = document.getElementById('select-division').value;
+            document.getElementById('titulo-tabla').innerText = `Postulantes: ${div.toUpperCase().replace('_', ' ')}`;
+            
+            try {
+                const res = await fetch(`/api/admin/obtener/${div}`);
+                const data = await res.json();
+                const tbody = document.getElementById('tbody-postulantes');
+                tbody.innerHTML = '';
+
+                if(!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #8b949e;">No hay postulaciones registradas en esta división.</td></tr>`;
+                    return;
+                }
+
+                data.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #30363d;">
+                            <td style="padding: 10px;"><b>${row.player_id || ''}</b></td>
+                            <td style="padding: 10px;">${row.contacto || ''}</td>
+                            <td style="padding: 10px;">${row.edad || ''}</td>
+                            <td style="padding: 10px;">${row.rol || '-'} <br><small style="color: #8b949e;">${row.rango_actual || ''}</small></td>
+                            <td style="padding: 10px;">${row.peak_elo || ''}</td>
+                            <td style="padding: 10px;"><span style="padding: 3px 8px; border-radius: 4px; background: ${row.estado === 'Aceptado' ? '#238636' : row.estado === 'Rechazado' ? '#da3633' : '#1f6feb'}; color:#fff;">${row.estado || 'Tryout'}</span></td>
+                            <td style="padding: 10px;">
+                                <button class="btn-action btn-aceptar" onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Aceptado')">Aceptar</button>
+                                <button class="btn-action btn-rechazar" onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Rechazado')">Rechazar</button>
+                                <button class="btn-action btn-blacklist" onclick="enviarBlacklist('${div}', '${row.id}', '${row.player_id}', '${row.contacto}')">Blacklist</button>
+                                <button class="btn-action btn-eliminar" onclick="eliminarPostulante('${div}', '${row.id}')">Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e) { console.error("Error al cargar postulantes:", e); }
+        }
+
+        async function actualizarEstadoPostulante(div, id, nuevoEstado) {
+            await fetch(`/api/admin/actualizar_estado`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ division: div, id: id, estado: nuevoEstado })
+            });
+            cargarDatosDivision();
+        }
+
+        async function eliminarPostulante(div, id) {
+            if(!confirm("¿Estás seguro de eliminar permanentemente a este postulante?")) return;
+            await fetch(`/api/admin/eliminar_postulante`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ division: div, id: id })
+            });
+            cargarDatosDivision();
+        }
+
+        async function enviarBlacklist(div, id, player_id, contacto) {
+            const motivo = prompt("Ingrese el motivo del baneo / Lista Negra:", "Incumplimiento de normas");
+            if(motivo === null) return; // Cancelado por el usuario
+
+            await fetch(`/api/admin/agregar_blacklist`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    division: div,
+                    id: id,
+                    player_id: player_id,
+                    contacto: contacto,
+                    motivo: motivo
+                })
+            });
+            cargarDatosDivision();
+            cargarListaNegra();
+        }
+
+        // Cargar lista de baneados
+        async function cargarListaNegra() {
+            try {
+                const res = await fetch('/api/admin/obtener_blacklist');
+                const data = await res.json();
+                const tbody = document.getElementById('tbody-blacklist');
+                tbody.innerHTML = '';
+
+                if(!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 15px; color: #8b949e;">No hay jugadores en la lista negra.</td></tr>`;
+                    return;
+                }
+
+                data.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #30363d;">
+                            <td style="padding: 10px;"><b>${row.id_jugador || ''}</b></td>
+                            <td style="padding: 10px;">${row.contacto || ''}</td>
+                            <td style="padding: 10px; color: #ff8585;">${row.motivo || ''}</td>
+                            <td style="padding: 10px;">
+                                <button class="btn-action btn-aceptar" onclick="quitarBlacklist('${row.id}')">Quitar de Lista Negra</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e) { console.error("Error al cargar lista negra:", e); }
+        }
+
+        async function quitarBlacklist(id) {
+            if(!confirm("¿Deseas remover a este jugador de la Lista Negra?")) return;
+            await fetch('/api/admin/eliminar_blacklist', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id: id })
+            });
+            cargarListaNegra();
+        }
+
+        window.onload = () => {
+            cargarConfiguracionEstado();
+            cargarDatosDivision();
+            cargarListaNegra();
+        };
+    </script>
+</body>
+</html>
