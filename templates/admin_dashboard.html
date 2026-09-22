@@ -7,48 +7,124 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header class="top-nav">
-        <div class="logo">🛠️ PANEL GERENCIAL - SCARLET</div>
-        <nav>
-            <a href="/" target="_blank">Ver Sitio Web</a>
-            <a href="/admin/logout" style="color: #ff4655;">Cerrar Sesión</a>
-        </nav>
-    </header>
+    <header class="top-nav">Código JavaScript necesario para renderizar y actualizar dinámicamente el **Control de Convocatorias** y la tabla de **Aspirantes / Postulaciones** según la división seleccionada:
 
-    <div class="container" style="max-width: 1200px; padding-bottom: 40px;">
-        <div class="header-title" style="display: flex; justify-content: space-between; align-items: center;">
+```html
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const selectDivision = document.querySelector('select'); // O usa document.getElementById('tu-id-select')
+  const cardConvocatorias = document.querySelectorAll('.card, div[class*="bg-"], div')[0]; // Contenedor de Control de Convocatorias
+  const cardPostulaciones = document.querySelectorAll('.card, div[class*="bg-"], div')[1]; // Segundo contenedor vacío
+
+  // Función para renderizar el contenido dinámico
+  async function cargarDatosDivision(division) {
+    // 1. Estructura y estado para "Control de Convocatorias"
+    const contenedorConvocatorias = document.querySelector('#contenedor-convocatorias') || document.querySelector('.card:first-of-type');
+    if (contenedorConvocatorias) {
+      contenedorConvocatorias.innerHTML = `
+        <div class="p-3">
+          <h5 class="mb-3">🚦 Control de Convocatorias (${division})</h5>
+          <div class="d-flex align-items-center justify-content-between bg-dark p-3 rounded border border-secondary">
             <div>
-                <h1>📊 Gestión de Rosters y Postulaciones</h1>
-                <p>Administra los aspirantes y controla el estado de las convocatorias.</p>
+              <p class="m-0 fw-bold">Estado de postulación:</p>
+              <small class="text-muted">Permite o bloquea el envío de nuevos formularios</small>
             </div>
-            <div>
-                <label><b>Seleccionar División:</b></label>
-                <select id="select-division" onchange="cargarDatosDivision()" style="padding: 8px; background: #161b22; color: #fff; border: 1px solid #30363d; border-radius: 6px;">
-                    <option value="valorant">Valorant</option>
-                    <option value="overwatch">Overwatch</option>
-                    <option value="cs">Counter-Strike (CS)</option>
-                    <option value="valorant_femenino">Valorant Femenino</option>
-                    <option value="fighting">Fighting Games</option>
-                </select>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="switchConvocatoria" checked>
+              <label class="form-check-label text-success fw-bold" id="labelEstado">Abiertas</label>
             </div>
+          </div>
         </div>
+      `;
 
-        <!-- Panel de Control de Estados (Abrir/Cerrar) -->
-        <div class="form-card" style="margin-bottom: 25px; padding: 15px 20px;">
-            <h3>🚦 Control de Convocatorias</h3>
-            <div id="controles-estado" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
-                <!-- Generado dinámicamente -->
-            </div>
+      // Event listener para el switch de convocatorias
+      const switchBtn = document.getElementById('switchConvocatoria');
+      const labelEstado = document.getElementById('labelEstado');
+      if (switchBtn) {
+        switchBtn.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            labelEstado.textContent = 'Abiertas';
+            labelEstado.className = 'form-check-label text-success fw-bold';
+          } else {
+            labelEstado.textContent = 'Cerradas';
+            labelEstado.className = 'form-check-label text-danger fw-bold';
+          }
+        });
+      }
+    }
+
+    // 2. Estructura y tabla para la sección de Postulaciones / Rosters
+    const contenedorPostulaciones = document.querySelector('#contenedor-postulaciones') || document.querySelectorAll('.card')[1];
+    if (contenedorPostulaciones) {
+      contenedorPostulaciones.innerHTML = `
+        <div class="p-3">
+          <h5 class="mb-3">📋 Aspirantes y Postulados - ${division}</h5>
+          <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Rol / Rango</th>
+                  <th>Fecha</th>
+                  <th>Estado</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaAspirantes">
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-3">Cargando postulaciones de ${division}...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+      `;
 
-        <!-- Tabla de Postulantes -->
-        <div class="form-card">
-            <h3 idPara poder ayudarte a actualizar tu panel gerencial, **¿qué funcionalidades o cambios específicos necesitas agregar?**
+      // Simulación o petición a backend (fetch API)
+      obtenerAspirantesBackend(division);
+    }
+  }
 
-Dime cuáles de los siguientes puntos (o cualquier otro) quieres implementar:
+  // Petición de datos (reemplazar la URL por tu API o base de datos)
+  async function obtenerAspirantesBackend(division) {
+    const tabla = document.getElementById('tablaAspirantes');
+    
+    try {
+      /* 
+      // Ejemplo de conexión real:
+      const response = await fetch(`/api/postulaciones?division=${division}`);
+      const data = await response.json();
+      */
 
-1. **Nuevos campos en la tabla** (ej. Tracker link, país, disponibilidad horaria, observaciones/notas del admin).
-2. **Filtros y Búsqueda** (ej. buscar por ID/nombre, filtrar por estado "Pendiente/Aceptado/Rechazado" o por Rango).
-3. **Acciones adicionales** (ej. botón para eliminar postulación, exportar datos a CSV/Excel, ver perfil detallado en un modal).
-4. **Mejoras de UI/Diseño** (ej. badges de color por rango, confirmación al aceptar/rechazar, notificaciones toast).
-5. **Integración con backend** (ej. envío de webhook a Discord o correo automático al aceptar/rechazar).
+      // Datos de prueba para previsualización
+      setTimeout(() => {
+        tabla.innerHTML = `
+          <tr>
+            <td><strong>PlayerOne#1234</strong></td>
+            <td>Radiant / Duelista</td>
+            <td>22/09/2026</td>
+            <td><span class="badge bg-warning text-dark">Pendiente</span></td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-success">Aceptar</button>
+              <button class="btn btn-sm btn-outline-danger">Rechazar</button>
+            </td>
+          </tr>
+        `;
+      }, 400);
+
+    } catch (error) {
+      tabla.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error al cargar datos.</td></tr>`;
+    }
+  }
+
+  // Listener para el selector de división
+  if (selectDivision) {
+    selectDivision.addEventListener('change', (e) => {
+      cargarDatosDivision(e.target.value);
+    });
+
+    // Carga inicial según el valor por defecto
+    cargarDatosDivision(selectDivision.value);
+  }
+});
+</script>
