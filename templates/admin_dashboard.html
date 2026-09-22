@@ -7,23 +7,23 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .btn-action {
-            padding: 5px 10px;
+            padding: 6px 12px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 0.85rem;
             margin-right: 4px;
             color: #fff;
-            font-weight: 500;
+            font-weight: 600;
         }
         .btn-aceptar { background: #238636; }
-        .btn-rechazar { background: #d9534f; }
-        .btn-blacklist { background: #b02a37; }
-        .btn-eliminar { background: #6c757d; }
+        .btn-rechazar { background: #da3633; }
+        .btn-blacklist { background: #8e1515; }
+        .btn-eliminar { background: #484f58; }
         .btn-aceptar:hover { background: #2ea043; }
-        .btn-rechazar:hover { background: #c9302c; }
-        .btn-blacklist:hover { background: #842029; }
-        .btn-eliminar:hover { background: #5c636a; }
+        .btn-rechazar:hover { background: #f85149; }
+        .btn-blacklist:hover { background: #b02a37; }
+        .btn-eliminar:hover { background: #6e7681; }
     </style>
 </head>
 <body>
@@ -35,17 +35,17 @@
         </nav>
     </header>
 
-    <div class="container" style="max-width: 1200px; padding: 20px;">
-        <div class="header-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="max-width: 1200px; margin: 30px auto; padding: 0 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
             <div>
-                <h1>📊 Gestión de Rosters y Postulaciones</h1>
-                <p>Administra los aspirantes y controla el estado de las convocatorias.</p>
+                <h1 style="font-size: 1.8rem;">📊 Gestión de Rosters y Postulaciones</h1>
+                <p style="color: #a0a0b0; font-size: 0.9rem;">Administra los aspirantes y controla el estado de las convocatorias.</p>
             </div>
             <div>
-                <label><b>Seleccionar División:</b></label>
-                <select id="select-division" onchange="cargarDatosDivision()" style="padding: 8px; background: #161b22; color: #fff; border: 1px solid #30363d; border-radius: 6px;">
+                <label style="margin-right: 8px;"><b>Seleccionar División:</b></label>
+                <select id="select-division" onchange="cargarDatosDivision()" style="width: auto; display: inline-block;">
                     <option value="valorant">Valorant</option>
-                    <option value="overwatch">Overwatch</option>
+                    <option value="overwatch">Overwatch 2</option>
                     <option value="cs">Counter-Strike (CS)</option>
                     <option value="valorant_femenino">Valorant Femenino</option>
                     <option value="fighting">Fighting Games</option>
@@ -53,28 +53,28 @@
             </div>
         </div>
 
-        <!-- Panel de Control de Estados (Abrir/Cerrar Convocatoria) -->
-        <div class="form-card" style="margin-bottom: 25px; padding: 15px 20px; background: #161b22; border-radius: 8px; border: 1px solid #30363d;">
+        <!-- CONTROL DE ESTADO DE CONVOCATORIAS -->
+        <div class="form-card">
             <h3>🚦 Control de Convocatorias</h3>
-            <div id="controles-estado" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
+            <div id="controles-estado" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px;">
                 <!-- Cargado dinámicamente -->
             </div>
         </div>
 
-        <!-- Tabla de Postulantes de la División Seleccionada -->
-        <div class="form-card" style="background: #161b22; padding: 20px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 25px;">
-            <h3 id="titulo-tabla">Postulantes: Valorant</h3>
+        <!-- TABLA DE POSTULANTES -->
+        <div class="form-card">
+            <h3 id="titulo-tabla">Postulantes: VALORANT</h3>
             <div style="overflow-x: auto; margin-top: 15px;">
-                <table id="tabla-postulantes" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; color: #fff;">
+                <table>
                     <thead>
-                        <tr style="background: #21262d; border-bottom: 2px solid #ff4655;">
-                            <th style="padding: 10px;">ID / Jugador</th>
-                            <th style="padding: 10px;">Contacto</th>
-                            <th style="padding: 10px;">Edad</th>
-                            <th style="padding: 10px;">Rol / Rango</th>
-                            <th style="padding: 10px;">Peak Elo</th>
-                            <th style="padding: 10px;">Estado</th>
-                            <th style="padding: 10px;">Acciones</th>
+                        <tr>
+                            <th>ID / Jugador</th>
+                            <th>Contacto</th>
+                            <th>Edad</th>
+                            <th>Rol / Rango</th>
+                            <th>Peak Elo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tbody-postulantes">
@@ -84,18 +84,18 @@
             </div>
         </div>
 
-        <!-- Tabla de Lista Negra (Blacklist) -->
-        <div class="form-card" style="background: #161b22; padding: 20px; border-radius: 8px; border: 1px solid #30363d;">
+        <!-- TABLA DE LISTA NEGRA -->
+        <div class="form-card">
             <h3 style="color: #ff4655;">⛔ Lista Negra (Blacklist)</h3>
-            <p style="font-size: 0.85rem; color: #8b949e; margin-bottom: 10px;">Jugadores bloqueados para futuras convocatorias.</p>
+            <p style="font-size: 0.85rem; color: #a0a0b0; margin-bottom: 15px;">Jugadores bloqueados para futuras convocatorias.</p>
             <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; color: #fff;">
+                <table>
                     <thead>
-                        <tr style="background: #21262d; border-bottom: 2px solid #ff4655;">
-                            <th style="padding: 10px;">ID Jugador</th>
-                            <th style="padding: 10px;">Contacto</th>
-                            <th style="padding: 10px;">Motivo</th>
-                            <th style="padding: 10px;">Acción</th>
+                        <tr>
+                            <th>ID Jugador</th>
+                            <th>Contacto</th>
+                            <th>Motivo</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody id="tbody-blacklist">
@@ -109,7 +109,6 @@
     <script>
         const divisionesDisponibles = ["valorant", "overwatch", "cs", "valorant_femenino", "fighting"];
 
-        // Cargar controles de Abrir/Cerrar convocatorias
         async function cargarConfiguracionEstado() {
             try {
                 const res = await fetch('/api/configuracion');
@@ -124,16 +123,16 @@
                     const esAbierta = estadoActual === 'abierta';
 
                     contenedor.innerHTML += `
-                        <div style="background: #21262d; padding: 10px 15px; border-radius: 6px; border: 1px solid #30363d;">
+                        <div style="background: rgba(33, 38, 45, 0.8); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px;">
                             <span style="text-transform: capitalize; font-weight: bold;">${div.replace('_', ' ')}:</span> 
-                            <span style="color: ${esAbierta ? '#2ea043' : '#ff4655'};">${estadoActual.toUpperCase()}</span>
-                            <button onclick="cambiarEstadoConvocatoria('${clave}', '${esAbierta ? 'cerrada' : 'abierta'}')" style="margin-left: 10px; padding: 2px 8px; background: ${esAbierta ? '#da3633' : '#238636'}; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
+                            <span style="color: ${esAbierta ? '#2ea043' : '#ff4655'}; font-weight: bold;">${estadoActual.toUpperCase()}</span>
+                            <button onclick="cambiarEstadoConvocatoria('${clave}', '${esAbierta ? 'cerrada' : 'abierta'}')" style="padding: 4px 10px; background: ${esAbierta ? '#da3633' : '#238636'}; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
                                 ${esAbierta ? 'Cerrar' : 'Abrir'}
                             </button>
                         </div>
                     `;
                 });
-            } catch(e) { console.error("Error al cargar configuración:", e); }
+            } catch(e) { console.error(e); }
         }
 
         async function cambiarEstadoConvocatoria(clave, nuevoValor) {
@@ -145,7 +144,6 @@
             cargarConfiguracionEstado();
         }
 
-        // Cargar tabla de postulantes según la división seleccionada
         async function cargarDatosDivision() {
             const div = document.getElementById('select-division').value;
             document.getElementById('titulo-tabla').innerText = `Postulantes: ${div.toUpperCase().replace('_', ' ')}`;
@@ -157,20 +155,20 @@
                 tbody.innerHTML = '';
 
                 if(!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #8b949e;">No hay postulaciones registradas en esta división.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 25px; color: #a0a0b0;">No hay postulaciones registradas en esta división.</td></tr>`;
                     return;
                 }
 
                 data.forEach(row => {
                     tbody.innerHTML += `
-                        <tr style="border-bottom: 1px solid #30363d;">
-                            <td style="padding: 10px;"><b>${row.player_id || ''}</b></td>
-                            <td style="padding: 10px;">${row.contacto || ''}</td>
-                            <td style="padding: 10px;">${row.edad || ''}</td>
-                            <td style="padding: 10px;">${row.rol || '-'} <br><small style="color: #8b949e;">${row.rango_actual || ''}</small></td>
-                            <td style="padding: 10px;">${row.peak_elo || ''}</td>
-                            <td style="padding: 10px;"><span style="padding: 3px 8px; border-radius: 4px; background: ${row.estado === 'Aceptado' ? '#238636' : row.estado === 'Rechazado' ? '#da3633' : '#1f6feb'}; color:#fff;">${row.estado || 'Tryout'}</span></td>
-                            <td style="padding: 10px;">
+                        <tr>
+                            <td><b>${row.player_id || ''}</b></td>
+                            <td>${row.contacto || ''}</td>
+                            <td>${row.edad || ''}</td>
+                            <td>${row.rol || '-'} <br><small style="color: #a0a0b0;">${row.rango_actual || ''}</small></td>
+                            <td>${row.peak_elo || ''}</td>
+                            <td><span style="padding: 4px 10px; border-radius: 6px; background: ${row.estado === 'Aceptado' ? '#238636' : row.estado === 'Rechazado' ? '#da3633' : '#1f6feb'}; color:#fff; font-weight: 600; font-size: 0.8rem;">${row.estado || 'Tryout'}</span></td>
+                            <td>
                                 <button class="btn-action btn-aceptar" onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Aceptado')">Aceptar</button>
                                 <button class="btn-action btn-rechazar" onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Rechazado')">Rechazar</button>
                                 <button class="btn-action btn-blacklist" onclick="enviarBlacklist('${div}', '${row.id}', '${row.player_id}', '${row.contacto}')">Blacklist</button>
@@ -179,7 +177,7 @@
                         </tr>
                     `;
                 });
-            } catch(e) { console.error("Error al cargar postulantes:", e); }
+            } catch(e) { console.error(e); }
         }
 
         async function actualizarEstadoPostulante(div, id, nuevoEstado) {
@@ -192,7 +190,7 @@
         }
 
         async function eliminarPostulante(div, id) {
-            if(!confirm("¿Estás seguro de eliminar permanentemente a este postulante?")) return;
+            if(!confirm("¿Estás seguro de eliminar a este postulante?")) return;
             await fetch(`/api/admin/eliminar_postulante`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -203,7 +201,7 @@
 
         async function enviarBlacklist(div, id, player_id, contacto) {
             const motivo = prompt("Ingrese el motivo del baneo / Lista Negra:", "Incumplimiento de normas");
-            if(motivo === null) return; // Cancelado por el usuario
+            if(motivo === null) return;
 
             await fetch(`/api/admin/agregar_blacklist`, {
                 method: 'POST',
@@ -220,7 +218,6 @@
             cargarListaNegra();
         }
 
-        // Cargar lista de baneados
         async function cargarListaNegra() {
             try {
                 const res = await fetch('/api/admin/obtener_blacklist');
@@ -229,23 +226,23 @@
                 tbody.innerHTML = '';
 
                 if(!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 15px; color: #8b949e;">No hay jugadores en la lista negra.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #a0a0b0;">No hay jugadores en la lista negra.</td></tr>`;
                     return;
                 }
 
                 data.forEach(row => {
                     tbody.innerHTML += `
-                        <tr style="border-bottom: 1px solid #30363d;">
-                            <td style="padding: 10px;"><b>${row.id_jugador || ''}</b></td>
-                            <td style="padding: 10px;">${row.contacto || ''}</td>
-                            <td style="padding: 10px; color: #ff8585;">${row.motivo || ''}</td>
-                            <td style="padding: 10px;">
-                                <button class="btn-action btn-aceptar" onclick="quitarBlacklist('${row.id}')">Quitar de Lista Negra</button>
+                        <tr>
+                            <td><b>${row.id_jugador || ''}</b></td>
+                            <td>${row.contacto || ''}</td>
+                            <td style="color: #ff8585;">${row.motivo || ''}</td>
+                            <td>
+                                <button class="btn-action btn-aceptar" onclick="quitarBlacklist('${row.id}')">Remover Baneo</button>
                             </td>
                         </tr>
                     `;
                 });
-            } catch(e) { console.error("Error al cargar lista negra:", e); }
+            } catch(e) { console.error(e); }
         }
 
         async function quitarBlacklist(id) {
