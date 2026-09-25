@@ -89,9 +89,7 @@
 
                         <div style="margin-bottom: 15px;">
                             <label><b>Rango Actual:</b></label>
-                            <select id="select-rango">
-                                <!-- Opciones cargadas por JS -->
-                            </select>
+                            <input type="text" id="rango_actual" placeholder="Ej: Ascendente 2, Diamante 3, Nivel 8, etc." required>
                         </div>
 
                         <div style="margin-bottom: 15px;">
@@ -226,13 +224,6 @@
                     selectRol.innerHTML += `<option value="${rol}">${rol}</option>`;
                 });
 
-                // Actualizar rangos dinámicos
-                const selectRango = document.getElementById('select-rango');
-                selectRango.innerHTML = '';
-                info.rangos.forEach(rango => {
-                    selectRango.innerHTML += `<option value="${rango}">${rango}</option>`;
-                });
-
                 // Mostrar/ocultar campos específicos de fighting games
                 const extraFighting = document.getElementById('extra-fighting');
                 if (div === 'fighting') {
@@ -255,7 +246,7 @@
                 servidores: document.getElementById('servidores').value,
                 objetivo: document.getElementById('objetivo').value,
                 rol: document.getElementById('select-rol').value,
-                rango_actual: document.getElementById('select-rango').value,
+                rango_actual: document.getElementById('rango_actual').value, // Actualizado al nuevo ID
                 peak_elo: document.getElementById('peak_elo').value,
                 experiencia: document.getElementById('experiencia').value,
                 baneos: document.getElementById('baneos').value,
