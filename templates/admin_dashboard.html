@@ -20,6 +20,18 @@
         .btn-rechazar { background: #da3633; }
         .btn-blacklist { background: #8e1515; }
         .btn-eliminar { background: #484f58; }
+        .btn-excel {
+            background: #21a366;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-right: 8px;
+        }
+        .btn-excel:hover { background: #1e8e58; }
         .btn-vaciar-db {
             background: #b02a37;
             color: #fff;
@@ -46,7 +58,7 @@
         </nav>
     </header>
 
-    <div style="max-width: 1200px; margin: 30px auto; padding: 0 20px;">
+    <div style="max-width: 1300px; margin: 30px auto; padding: 0 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
             <div>
                 <h1 style="font-size: 1.8rem;">📊 Gestión de Rosters y Postulaciones</h1>
@@ -72,25 +84,20 @@
             </div>
         </div>
 
-        <!-- TABLA DE POSTULANTES -->
+        <!-- TABLA DE POSTULANTES CON TODOS LOS CAMPOS -->
         <div class="form-card">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
                 <h3 id="titulo-tabla">Postulantes: VALORANT</h3>
-                <button class="btn-vaciar-db" onclick="vaciarBaseDatosDivision()">🗑️ Vaciar Base de Datos</button>
+                <div>
+                    <button class="btn-excel" onclick="exportarExcelDivision()">📊 Exportar a Excel</button>
+                    <button class="btn-vaciar-db" onclick="vaciarBaseDatosDivision()">🗑️ Vaciar Base de Datos</button>
+                </div>
             </div>
             
             <div style="overflow-x: auto;">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>ID / Jugador</th>
-                            <th>Contacto</th>
-                            <th>Edad</th>
-                            <th>Rol / Rango</th>
-                            <th>Peak Elo</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
+                    <thead id="thead-postulantes">
+                        <!-- Cargado dinámicamente -->
                     </thead>
                     <tbody id="tbody-postulantes">
                         <!-- Cargado dinámicamente -->
@@ -159,6 +166,11 @@
             cargarConfiguracionEstado();
         }
 
+        function exportarExcelDivision() {
+            const div = document.getElementById('select-division').value;
+            window.location.href = `/api/admin/exportar_excel/${div}`;
+        }
+
         async function cargarDatosDivision() {
             const div = document.getElementById('select-division').value;
             document.getElementById('titulo-tabla').innerText = `Postulantes: ${div.toUpperCase().replace('_', ' ')}`;
@@ -166,11 +178,32 @@
             try {
                 const res = await fetch(`/api/admin/obtener/${div}`);
                 const data = await res.json();
+                const thead = document.getElementById('thead-postulantes');
                 const tbody = document.getElementById('tbody-postulantes');
+                
+                thead.innerHTML = `
+                    <tr>
+                        <th>ID / Jugador</th>
+                        <th>Contacto</th>
+                        <th>Edad</th>
+                        <th>País</th>
+                        <th>Servidores</th>
+                        <th>Objetivo</th>
+                        <th>Rol / Rango</th>
+                        <th>Peak Elo</th>
+                        <th>Experiencia</th>
+                        <th>Sanciones</th>
+                        ${div === 'fighting' ? '<th>Juego / Personaje</th>' : ''}
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                `;
+
                 tbody.innerHTML = '';
 
                 if(!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 25px; color: #a0a0b0;">No hay postulaciones registradas en esta división.</td></tr>`;
+                    const totalCols = div === 'fighting' ? 13 : 12;
+                    tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align: center; padding: 25px; color: #a0a0b0;">No hay postulaciones registradas en esta división.</td></tr>`;
                     return;
                 }
 
@@ -180,10 +213,16 @@
                             <td><b>${row.player_id || ''}</b></td>
                             <td>${row.contacto || ''}</td>
                             <td>${row.edad || ''}</td>
+                            <td>${row.pais || '-'}</td>
+                            <td>${row.servidores || '-'}</td>
+                            <td>${row.objetivo || '-'}</td>
                             <td>${row.rol || '-'} <br><small style="color: #a0a0b0;">${row.rango_actual || ''}</small></td>
-                            <td>${row.peak_elo || ''}</td>
+                            <td>${row.peak_elo || '-'}</td>
+                            <td style="max-width: 180px; font-size: 0.8rem; white-space: normal;">${row.experiencia || '-'}</td>
+                            <td>${row.baneos || 'Limpio'}</td>
+                            ${div === 'fighting' ? `<td><small>${row.juego_especifico \vert{}\vert{} '-'}</small><br><b>${row.personaje || '-'}</b></td>` : ''}
                             <td><span style="padding: 4px 10px; border-radius: 6px; background: ${row.estado === 'Aceptado' ? '#238636' : row.estado === 'Rechazado' ? '#da3633' : '#1f6feb'}; color:#fff; font-weight: 600; font-size: 0.8rem;">${row.estado || 'Tryout'}</span></td>
-                            <td>
+                            <td style="white-space: nowrap;">
                                 <button class="btn-action btn-aceptar" onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Aceptado')">Aceptar</button>
                                 <button class="btn-action btn-rechazar" onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Rechazado')">Rechazar</button>
                                 <button class="btn-action btn-blacklist" onclick="enviarBlacklist('${div}', '${row.id}', '${row.player_id}', '${row.contacto}')">Blacklist</button>
@@ -199,7 +238,7 @@
             const div = document.getElementById('select-division').value;
             const password = prompt(`⚠️ ¡ATENCIÓN! Estás a punto de BORRAR TODOS los datos registrados en la división ${div.toUpperCase().replace('_', ' ')}.\n\nPara confirmar, ingresa la contraseña de administrador:`);
             
-            if (password === null) return; // Si cancela el prompt
+            if (password === null) return;
 
             if (!password.trim()) {
                 alert("⚠️ Debe ingresar la contraseña para continuar.");
