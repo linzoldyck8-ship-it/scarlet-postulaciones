@@ -63,6 +63,24 @@
                         </div>
 
                         <div style="margin-bottom: 15px;">
+                            <label><b>País de residencia:</b></label>
+                            <input type="text" id="pais" placeholder="Ej: Chile, Argentina, México" required>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label><b>Servidores en los que juega:</b></label>
+                            <input type="text" id="servidores" placeholder="Ej: Santiago, BR, LATAM Norte" required>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label><b>Objetivo en el equipo:</b></label>
+                            <select id="objetivo">
+                                <option value="Competir">Vengo a competir</option>
+                                <option value="Mejorar rango">Vengo a mejorar mi rango</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
                             <label><b>Rol Principal:</b></label>
                             <select id="select-rol">
                                 <!-- Opciones cargadas por JS -->
@@ -79,6 +97,11 @@
                         <div style="margin-bottom: 15px;">
                             <label><b>Peak Elo (Máximo Rango Alcanzado):</b></label>
                             <input type="text" id="peak_elo" placeholder="Ej: Radiant / Top 500 / Level 10 FACEIT">
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label><b>Experiencia competitiva previa:</b></label>
+                            <textarea id="experiencia" placeholder="Escribe aquí si has estado en equipos, jugado torneos, etc." rows="3" required></textarea>
                         </div>
 
                         <div style="margin-bottom: 20px;">
@@ -228,9 +251,13 @@
                 player_id: document.getElementById('player_id').value,
                 contacto: document.getElementById('contacto').value,
                 edad: document.getElementById('edad').value,
+                pais: document.getElementById('pais').value,
+                servidores: document.getElementById('servidores').value,
+                objetivo: document.getElementById('objetivo').value,
                 rol: document.getElementById('select-rol').value,
                 rango_actual: document.getElementById('select-rango').value,
                 peak_elo: document.getElementById('peak_elo').value,
+                experiencia: document.getElementById('experiencia').value,
                 baneos: document.getElementById('baneos').value,
                 juego_especifico: document.getElementById('juego_especifico')?.value || '',
                 personaje: document.getElementById('personaje')?.value || ''
