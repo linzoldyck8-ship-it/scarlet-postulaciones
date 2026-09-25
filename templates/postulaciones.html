@@ -23,7 +23,7 @@
                 <h2 style="font-size: 1.6rem; margin-bottom: 5px;">📝 Formulario de Postulación</h2>
                 <p style="color: #a0a0b0; font-size: 0.85rem; margin-bottom: 20px;">Selecciona tu disciplina e ingresa tus datos deportivos.</p>
 
-                <!-- Selector de Juego (Siempre visible para poder cambiar de división) -->
+                <!-- Selector de Juego -->
                 <div style="margin-bottom: 20px;">
                     <label><b>Seleccionar Juego / División:</b></label>
                     <select id="select-juego" onchange="actualizarOpcionesJuego()">
@@ -35,7 +35,7 @@
                     </select>
                 </div>
 
-                <!-- AVISO DE CONVOCATORIA CERRADA (Oculto por defecto) -->
+                <!-- AVISO DE CONVOCATORIA CERRADA -->
                 <div id="mensaje-cerrado" style="display: none; text-align: center; padding: 30px 20px; background: rgba(218, 54, 51, 0.15); border: 1px solid #da3633; border-radius: 10px; margin-top: 10px;">
                     <h3 style="color: #ff4655; margin-bottom: 10px; font-size: 1.3rem;">🚫 CONVOCATORIA CERRADA</h3>
                     <p style="color: #f0f0f5; font-size: 0.95rem; line-height: 1.5;">
@@ -44,7 +44,7 @@
                     </p>
                 </div>
 
-                <!-- CONTENEDOR DE CAMPOS (Se oculta cuando la división está cerrada) -->
+                <!-- CONTENEDOR DE CAMPOS -->
                 <form id="form-postular" onsubmit="enviarPostulacion(event)">
                     <div id="contenedor-campos">
                         <div style="margin-bottom: 15px;">
@@ -121,7 +121,7 @@
 
             </div>
 
-            <!-- PANEL LATERAL DE VISTA PREVIA DEL JUEGO -->
+            <!-- PANEL LATERAL DE VISTA PREVIA Y CONSULTA DE ESTADO -->
             <div>
                 <div class="form-card" style="text-align: center;">
                     <img id="game-preview-img" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920" style="width: 100%; height: 260px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
@@ -130,13 +130,27 @@
                         Buscamos jugadores competitivos con comunicación limpia, disciplina táctica y alta disponibilidad para scrims y torneos oficiales.
                     </p>
                 </div>
+
+                <!-- NUEVA SECCIÓN DE CONSULTA DE ESTADO -->
+                <div class="form-card" style="margin-top: 20px;">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #ff4655;">🔎 Consultar Estado de Postulación</h3>
+                    <p style="color: #a0a0b0; font-size: 0.85rem; margin-bottom: 15px;">Ingresa tu ID de Jugador o Usuario de Contacto para revisar el estado de tu solicitud.</p>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="input-busqueda-estado" placeholder="Ej: ScarletPlayer#LAN o discord_user" style="flex: 1;">
+                        <button type="button" class="btn-primary" onclick="consultarEstadoPostulacion()" style="padding: 10px 15px; width: auto; white-space: nowrap;">Consultar</button>
+                    </div>
+
+                    <div id="resultado-busqueda-estado" style="display: none; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 0.9rem;">
+                        <!-- Resultado dinámico -->
+                    </div>
+                </div>
             </div>
 
         </div>
     </div>
 
     <script>
-        // Almacena la configuración de estados (abierta/cerrada)
         let estadosConvocatorias = {};
 
         const datosJuegos = {
@@ -177,7 +191,6 @@
             }
         };
 
-        // Consulta la API para saber qué divisiones están abiertas y cuáles cerradas
         async function cargarConfiguracionInicial() {
             try {
                 const res = await fetch('/api/configuracion');
@@ -197,34 +210,28 @@
             const div = document.getElementById('select-juego').value;
             const info = datosJuegos[div];
 
-            // 1. Actualizar imagen de fondo y tarjeta lateral
             document.getElementById('game-preview-img').src = info.img;
             document.getElementById('game-preview-title').innerText = info.titulo;
             document.getElementById('game-preview-desc').innerText = info.desc;
             document.body.style.backgroundImage = `linear-gradient(rgba(15, 15, 19, 0.85), rgba(15, 15, 19, 0.95)), url('${info.img}')`;
 
-            // 2. Comprobar si la convocatoria está cerrada
             const estadoDivision = estadosConvocatorias[`estado_${div}`] || 'abierta';
             const contenedorCampos = document.getElementById('contenedor-campos');
             const mensajeCerrado = document.getElementById('mensaje-cerrado');
 
             if (estadoDivision === 'cerrada') {
-                // Ocultar formulario y mostrar mensaje de cerrado
                 contenedorCampos.style.display = 'none';
                 mensajeCerrado.style.display = 'block';
             } else {
-                // Mostrar formulario y ocultar mensaje de cerrado
                 contenedorCampos.style.display = 'block';
                 mensajeCerrado.style.display = 'none';
 
-                // Actualizar roles dinámicos
                 const selectRol = document.getElementById('select-rol');
                 selectRol.innerHTML = '';
                 info.roles.forEach(rol => {
                     selectRol.innerHTML += `<option value="${rol}">${rol}</option>`;
                 });
 
-                // Mostrar/ocultar campos específicos de fighting games
                 const extraFighting = document.getElementById('extra-fighting');
                 if (div === 'fighting') {
                     extraFighting.style.display = 'block';
@@ -246,7 +253,7 @@
                 servidores: document.getElementById('servidores').value,
                 objetivo: document.getElementById('objetivo').value,
                 rol: document.getElementById('select-rol').value,
-                rango_actual: document.getElementById('rango_actual').value, // Actualizado al nuevo ID
+                rango_actual: document.getElementById('rango_actual').value,
                 peak_elo: document.getElementById('peak_elo').value,
                 experiencia: document.getElementById('experiencia').value,
                 baneos: document.getElementById('baneos').value,
@@ -271,6 +278,54 @@
                 }
             } catch (err) {
                 alert('❌ Error de conexión con el servidor.');
+            }
+        }
+
+        async function consultarEstadoPostulacion() {
+            const busqueda = document.getElementById('input-busqueda-estado').value.trim();
+            const contenedorRes = document.getElementById('resultado-busqueda-estado');
+
+            if(!busqueda) {
+                alert("Por favor ingresa tu ID de jugador o usuario de contacto.");
+                return;
+            }
+
+            contenedorRes.style.display = 'block';
+            contenedorRes.innerHTML = '<span style="color: #a0a0b0;">Buscando postulación...</span>';
+
+            try {
+                const res = await fetch('/api/consultar_estado', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ busqueda: busqueda })
+                });
+                const data = await res.json();
+
+                if(!data.encontrado) {
+                    contenedorRes.innerHTML = `<p style="color: #ff8585; margin: 0;">❌ ${data.message || 'No se encontró información.'}</p>`;
+                    return;
+                }
+
+                let html = '<h4 style="margin-bottom: 10px; color: #fff;">Resultados:</h4>';
+                data.resultados.forEach(item => {
+                    let colorEstado = '#ffc107';
+                    if(item.estado === 'Aceptado') colorEstado = '#2ea043';
+                    else if(item.estado === 'Rechazado') colorEstado = '#f85149';
+                    else if(item.estado === 'Blacklist') colorEstado = '#da3633';
+
+                    html += `
+                        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid ${colorEstado};">
+                            <p style="margin: 0 0 4px 0;"><b>División:</b> ${item.division}</p>
+                            <p style="margin: 0 0 4px 0;"><b>Jugador:</b> ${item.player_id}</p>
+                            <p style="margin: 0;"><b>Estado:</b> <span style="color: ${colorEstado}; font-weight: bold;">${item.estado}</span></p>
+                            ${item.motivo ? `<p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #a0a0b0;">${item.motivo}</p>` : ''}
+                        </div>
+                    `;
+                });
+                contenedorRes.innerHTML = html;
+
+            } catch(e) {
+                contenedorRes.innerHTML = '<p style="color: #f85149; margin: 0;">❌ Error al conectar con el servidor.</p>';
             }
         }
 
