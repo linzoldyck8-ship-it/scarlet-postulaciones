@@ -153,7 +153,7 @@ def postular(division):
             "rol": str(data.get('rol', 'Flex')),
             "peak_elo": str(data.get('peak_elo', '')),
             "baneos": str(data.get('baneos', 'Limpio')),
-            "estado": "Tryout",
+            "estado": "En revisión",
             "notas": str(data.get('notas', '')),
             "motivo_rechazo": ""
         }
@@ -323,7 +323,7 @@ def admin_exportar_excel(division):
                 'Peak Elo': d.get('peak_elo', ''),
                 'Experiencia': d.get('experiencia', ''),
                 'Sanciones / Baneos': d.get('baneos', ''),
-                'Estado': d.get('estado', 'Tryout')
+                'Estado': d.get('estado', 'En revisión')
             }
             if tabla == 'fighting':
                 fila['Juego Específico'] = d.get('juego_especifico', '')
@@ -391,7 +391,7 @@ def consultar_estado():
                         'player_id': fila.get('player_id'),
                         'rol': fila.get('rol'),
                         'rango_actual': fila.get('rango_actual'),
-                        'estado': fila.get('estado', 'Tryout')
+                        'estado': fila.get('estado', 'En revisión')
                     })
         except Exception as e:
             print(f"Aviso consulta {div}:", e)
