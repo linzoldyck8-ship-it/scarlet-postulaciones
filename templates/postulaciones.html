@@ -121,15 +121,31 @@
 
             </div>
 
-            <!-- PANEL LATERAL DE VISTA PREVIA Y CONSULTA DE ESTADO -->
-            <div>
-                <div class="form-card" style="text-align: center;">
-                    <img id="game-preview-img" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1920" style="width: 100%; height: 260px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
-                    <h3 id="game-preview-title" style="color: #ff4655;">VALORANT</h3>
-                    <p id="game-preview-desc" style="color: #a0a0b0; font-size: 0.9rem; margin-top: 8px; line-height: 1.5;">
-                        Buscamos jugadores competitivos con comunicación limpia, disciplina táctica y alta disponibilidad para scrims y torneos oficiales.
-                    </p>
-                </div>
+          <!-- PANEL LATERAL DE VISTA PREVIA Y CONSULTA DE ESTADO -->
+<div>
+    <div class="form-card" style="text-align: center;">
+        <img id="game-preview-img" src="https://i.pinimg.com/1200x/2a/c5/9f/2ac59fa5a3722e2cd8ddf9c430120016.jpg" style="width: 100%; height: 260px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);">
+        <h3 id="game-preview-title" style="color: #ff4655;">VALORANT</h3>
+        <p id="game-preview-desc" style="color: #a0a0b0; font-size: 0.9rem; margin-top: 8px; line-height: 1.5;">
+            Requisitos: Rango Ascendente o superior, micrófono en óptimo estado y disponibilidad de horarios en Chile.
+        </p>
+    </div>
+
+    <!-- SECCIÓN DE CONSULTA DE ESTADO -->
+    <div class="form-card" style="margin-top: 20px;">
+        <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #ff4655;">🔎 Consultar Estado de Postulación</h3>
+        <p style="color: #a0a0b0; font-size: 0.85rem; margin-bottom: 15px;">Ingresa tu ID de Jugador o Usuario de Contacto para revisar el estado de tu solicitud.</p>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="input-busqueda-estado" placeholder="Ej: ScarletPlayer#LAN o discord_user" style="flex: 1;">
+            <button type="button" class="btn-primary" onclick="consultarEstadoPostulacion()" style="padding: 10px 15px; width: auto; white-space: nowrap;">Consultar</button>
+        </div>
+
+        <div id="resultado-busqueda-estado" style="display: none; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 0.9rem;">
+            <!-- Resultado dinámico -->
+        </div>
+    </div>
+</div>
 
                 <!-- NUEVA SECCIÓN DE CONSULTA DE ESTADO -->
                 <div class="form-card" style="margin-top: 20px;">
