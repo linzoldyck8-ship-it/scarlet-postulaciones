@@ -84,7 +84,7 @@
             </div>
         </div>
 
-        <!-- TABLA DE POSTULANTES CON TODOS LOS CAMPOS -->
+        <!-- TABLA DE POSTULANTES -->
         <div class="form-card">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
                 <h3 id="titulo-tabla">Postulantes: VALORANT</h3>
@@ -138,105 +138,130 @@
                 const contenedor = document.getElementById('controles-estado');
                 contenedor.innerHTML = '';
 
-                divisionesDisponibles.forEach(div => {
-                    const clave = `estado_${div}`;
-                    const configItem = Array.isArray(data) ? data.find(item => item.clave === clave) : null;
-                    const estadoActual = configItem ? configItem.valor : 'abierta';
-                    const esAbierta = estadoActual === 'abierta';
+                divisionesDisponibles.forEach(function(div) {
+                    const clave = 'estado_' + div;
+                    let estadoActual = 'abierta';
+                    if (Array.isArray(data)) {
+                        const configItem = data.find(function(item) { return item.clave === clave; });
+                        if (configItem && configItem.valor) {
+                            estadoActual = configItem.valor;
+                        }
+                    }
 
-                    contenedor.innerHTML += `
-                        <div style="background: rgba(33, 38, 45, 0.8); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px;">
-                            <span style="text-transform: capitalize; font-weight: bold;">${div.replace('_', ' ')}:</span> 
-                            <span style="color: ${esAbierta ? '#2ea043' : '#ff4655'}; font-weight: bold;">${estadoActual.toUpperCase()}</span>
-                            <button onclick="cambiarEstadoConvocatoria('${clave}', '${esAbierta ? 'cerrada' : 'abierta'}')" style="padding: 4px 10px; background: ${esAbierta ? '#da3633' : '#238636'}; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
-                                ${esAbierta ? 'Cerrar' : 'Abrir'}
-                            </button>
-                        </div>
-                    `;
+                    const esAbierta = (estadoActual === 'abierta');
+                    const colorEstado = esAbierta ? '#2ea043' : '#ff4655';
+                    const colorBtn = esAbierta ? '#da3633' : '#238636';
+                    const textoBtn = esAbierta ? 'Cerrar' : 'Abrir';
+                    const siguienteEstado = esAbierta ? 'cerrada' : 'abierta';
+                    const divNombre = div.replace('_', ' ');
+
+                    contenedor.innerHTML += '<div style="background: rgba(33, 38, 45, 0.8); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px;">' +
+                        '<span style="text-transform: capitalize; font-weight: bold;">' + divNombre + ':</span> ' +
+                        '<span style="color: ' + colorEstado + '; font-weight: bold;">' + estadoActual.toUpperCase() + '</span>' +
+                        '<button onclick="cambiarEstadoConvocatoria(\'' + clave + '\', \'' + siguienteEstado + '\')" style="padding: 4px 10px; background: ' + colorBtn + '; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">' +
+                            textoBtn +
+                        '</button>' +
+                    '</div>';
                 });
-            } catch(e) { console.error(e); }
+            } catch(e) { 
+                console.error("Error al cargar estado de convocatorias:", e); 
+            }
         }
 
         async function cambiarEstadoConvocatoria(clave, nuevoValor) {
-            await fetch('/api/configuracion', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ clave: clave, valor: nuevoValor })
-            });
-            cargarConfiguracionEstado();
+            try {
+                await fetch('/api/configuracion', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ clave: clave, valor: nuevoValor })
+                });
+                cargarConfiguracionEstado();
+            } catch(e) {
+                console.error("Error al cambiar estado:", e);
+            }
         }
 
         function exportarExcelDivision() {
             const div = document.getElementById('select-division').value;
-            window.location.href = `/api/admin/exportar_excel/${div}`;
+            window.location.href = '/api/admin/exportar_excel/' + div;
         }
 
         async function cargarDatosDivision() {
             const div = document.getElementById('select-division').value;
-            document.getElementById('titulo-tabla').innerText = `Postulantes: ${div.toUpperCase().replace('_', ' ')}`;
+            document.getElementById('titulo-tabla').innerText = 'Postulantes: ' + div.toUpperCase().replace('_', ' ');
             
             try {
-                const res = await fetch(`/api/admin/obtener/${div}`);
+                const res = await fetch('/api/admin/obtener/' + div);
                 const data = await res.json();
                 const thead = document.getElementById('thead-postulantes');
                 const tbody = document.getElementById('tbody-postulantes');
                 
-                thead.innerHTML = `
-                    <tr>
-                        <th>ID / Jugador</th>
-                        <th>Contacto</th>
-                        <th>Edad</th>
-                        <th>País</th>
-                        <th>Servidores</th>
-                        <th>Objetivo</th>
-                        <th>Rol / Rango</th>
-                        <th>Peak Elo</th>
-                        <th>Experiencia</th>
-                        <th>Sanciones</th>
-                        ${div === 'fighting' ? '<th>Juego / Personaje</th>' : ''}
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                `;
+                let colExtraHeader = (div === 'fighting') ? '<th>Juego / Personaje</th>' : '';
+
+                thead.innerHTML = '<tr>' +
+                    '<th>ID / Jugador</th>' +
+                    '<th>Contacto</th>' +
+                    '<th>Edad</th>' +
+                    '<th>País</th>' +
+                    '<th>Servidores</th>' +
+                    '<th>Objetivo</th>' +
+                    '<th>Rol / Rango</th>' +
+                    '<th>Peak Elo</th>' +
+                    '<th>Experiencia</th>' +
+                    '<th>Sanciones</th>' +
+                    colExtraHeader +
+                    '<th>Estado</th>' +
+                    '<th>Acciones</th>' +
+                '</tr>';
 
                 tbody.innerHTML = '';
 
-                if(!data || data.length === 0) {
-                    const totalCols = div === 'fighting' ? 13 : 12;
-                    tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align: center; padding: 25px; color: #a0a0b0;">No hay postulaciones registradas en esta división.</td></tr>`;
+                if (!Array.isArray(data) || data.length === 0) {
+                    const totalCols = (div === 'fighting') ? 13 : 12;
+                    tbody.innerHTML = '<tr><td colspan="' + totalCols + '" style="text-align: center; padding: 25px; color: #a0a0b0;">No hay postulaciones registradas en esta división.</td></tr>';
                     return;
                 }
 
-                data.forEach(row => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><b>${row.player_id || ''}</b></td>
-                            <td>${row.contacto || ''}</td>
-                            <td>${row.edad || ''}</td>
-                            <td>${row.pais || '-'}</td>
-                            <td>${row.servidores || '-'}</td>
-                            <td>${row.objetivo || '-'}</td>
-                            <td>${row.rol || '-'} <br><small style="color: #a0a0b0;">${row.rango_actual || ''}</small></td>
-                            <td>${row.peak_elo || '-'}</td>
-                            <td style="max-width: 180px; font-size: 0.8rem; white-space: normal;">${row.experiencia || '-'}</td>
-                            <td>${row.baneos || 'Limpio'}</td>
-                            ${div === 'fighting' ? `<td><small>${row.juego_especifico \vert{}\vert{} '-'}</small><br><b>${row.personaje || '-'}</b></td>` : ''}
-                            <td><span style="padding: 4px 10px; border-radius: 6px; background: ${row.estado === 'Aceptado' ? '#238636' : row.estado === 'Rechazado' ? '#da3633' : '#1f6feb'}; color:#fff; font-weight: 600; font-size: 0.8rem;">${row.estado || 'Tryout'}</span></td>
-                            <td style="white-space: nowrap;">
-                                <button class="btn-action btn-aceptar" onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Aceptado')">Aceptar</button>
-                                <button class="btn-action btn-rechazar" onclick="actualizarEstadoPostulante('${div}', '${row.id}', 'Rechazado')">Rechazar</button>
-                                <button class="btn-action btn-blacklist" onclick="enviarBlacklist('${div}', '${row.id}', '${row.player_id}', '${row.contacto}')">Blacklist</button>
-                                <button class="btn-action btn-eliminar" onclick="eliminarPostulante('${div}', '${row.id}')">Eliminar</button>
-                            </td>
-                        </tr>
-                    `;
+                data.forEach(function(row) {
+                    let bgEstado = '#1f6feb';
+                    const est = row.estado || 'Tryout';
+                    if (est === 'Aceptado') bgEstado = '#238636';
+                    else if (est === 'Rechazado') bgEstado = '#da3633';
+
+                    let colExtraBody = '';
+                    if (div === 'fighting') {
+                        colExtraBody = '<td><small>' + (row.juego_especifico || '-') + '</small><br><b>' + (row.personaje || '-') + '</b></td>';
+                    }
+
+                    tbody.innerHTML += '<tr>' +
+                        '<td><b>' + (row.player_id || '') + '</b></td>' +
+                        '<td>' + (row.contacto || '') + '</td>' +
+                        '<td>' + (row.edad || '') + '</td>' +
+                        '<td>' + (row.pais || '-') + '</td>' +
+                        '<td>' + (row.servidores || '-') + '</td>' +
+                        '<td>' + (row.objetivo || '-') + '</td>' +
+                        '<td>' + (row.rol || '-') + '<br><small style="color: #a0a0b0;">' + (row.rango_actual || '') + '</small></td>' +
+                        '<td>' + (row.peak_elo || '-') + '</td>' +
+                        '<td style="max-width: 180px; font-size: 0.8rem; white-space: normal;">' + (row.experiencia || '-') + '</td>' +
+                        '<td>' + (row.baneos || 'Limpio') + '</td>' +
+                        colExtraBody +
+                        '<td><span style="padding: 4px 10px; border-radius: 6px; background: ' + bgEstado + '; color:#fff; font-weight: 600; font-size: 0.8rem;">' + est + '</span></td>' +
+                        '<td style="white-space: nowrap;">' +
+                            '<button class="btn-action btn-aceptar" onclick="actualizarEstadoPostulante(\'' + div + '\', \'' + row.id + '\', \'Aceptado\')">Aceptar</button>' +
+                            '<button class="btn-action btn-rechazar" onclick="actualizarEstadoPostulante(\'' + div + '\', \'' + row.id + '\', \'Rechazado\')">Rechazar</button>' +
+                            '<button class="btn-action btn-blacklist" onclick="enviarBlacklist(\'' + div + '\', \'' + row.id + '\', \'' + (row.player_id || '') + '\', \'' + (row.contacto || '') + '\')">Blacklist</button>' +
+                            '<button class="btn-action btn-eliminar" onclick="eliminarPostulante(\'' + div + '\', \'' + row.id + '\')">Eliminar</button>' +
+                        '</td>' +
+                    '</tr>';
                 });
-            } catch(e) { console.error(e); }
+            } catch(e) { 
+                console.error("Error al cargar datos de la división:", e); 
+            }
         }
 
         async function vaciarBaseDatosDivision() {
             const div = document.getElementById('select-division').value;
-            const password = prompt(`⚠️ ¡ATENCIÓN! Estás a punto de BORRAR TODOS los datos registrados en la división ${div.toUpperCase().replace('_', ' ')}.\n\nPara confirmar, ingresa la contraseña de administrador:`);
+            const password = prompt('⚠️ ¡ATENCIÓN! Estás a punto de BORRAR TODOS los datos registrados en la división ' + div.toUpperCase().replace('_', ' ') + '.\n\nPara confirmar, ingresa la contraseña de administrador:');
             
             if (password === null) return;
 
@@ -246,7 +271,7 @@
             }
 
             try {
-                const res = await fetch(`/api/admin/vaciar/${div}`, {
+                const res = await fetch('/api/admin/vaciar/' + div, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ password: password })
@@ -265,41 +290,53 @@
         }
 
         async function actualizarEstadoPostulante(div, id, nuevoEstado) {
-            await fetch(`/api/admin/actualizar_estado`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ division: div, id: id, estado: nuevoEstado })
-            });
-            cargarDatosDivision();
+            try {
+                await fetch('/api/admin/actualizar_estado', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ division: div, id: id, estado: nuevoEstado })
+                });
+                cargarDatosDivision();
+            } catch(e) {
+                console.error("Error al actualizar estado del postulante:", e);
+            }
         }
 
         async function eliminarPostulante(div, id) {
-            if(!confirm("¿Estás seguro de eliminar a este postulante?")) return;
-            await fetch(`/api/admin/eliminar_postulante`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ division: div, id: id })
-            });
-            cargarDatosDivision();
+            if (!confirm("¿Estás seguro de eliminar a este postulante?")) return;
+            try {
+                await fetch('/api/admin/eliminar_postulante', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ division: div, id: id })
+                });
+                cargarDatosDivision();
+            } catch(e) {
+                console.error("Error al eliminar postulante:", e);
+            }
         }
 
         async function enviarBlacklist(div, id, player_id, contacto) {
             const motivo = prompt("Ingrese el motivo del baneo / Lista Negra:", "Incumplimiento de normas");
-            if(motivo === null) return;
+            if (motivo === null) return;
 
-            await fetch(`/api/admin/agregar_blacklist`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    division: div,
-                    id: id,
-                    player_id: player_id,
-                    contacto: contacto,
-                    motivo: motivo
-                })
-            });
-            cargarDatosDivision();
-            cargarListaNegra();
+            try {
+                await fetch('/api/admin/agregar_blacklist', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        division: div,
+                        id: id,
+                        player_id: player_id,
+                        contacto: contacto,
+                        motivo: motivo
+                    })
+                });
+                cargarDatosDivision();
+                cargarListaNegra();
+            } catch(e) {
+                console.error("Error al enviar a blacklist:", e);
+            }
         }
 
         async function cargarListaNegra() {
@@ -309,37 +346,41 @@
                 const tbody = document.getElementById('tbody-blacklist');
                 tbody.innerHTML = '';
 
-                if(!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #a0a0b0;">No hay jugadores en la lista negra.</td></tr>`;
+                if (!Array.isArray(data) || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #a0a0b0;">No hay jugadores en la lista negra.</td></tr>';
                     return;
                 }
 
-                data.forEach(row => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><b>${row.id_jugador || ''}</b></td>
-                            <td>${row.contacto || ''}</td>
-                            <td style="color: #ff8585;">${row.motivo || ''}</td>
-                            <td>
-                                <button class="btn-action btn-aceptar" onclick="quitarBlacklist('${row.id}')">Remover Baneo</button>
-                            </td>
-                        </tr>
-                    `;
+                data.forEach(function(row) {
+                    tbody.innerHTML += '<tr>' +
+                        '<td><b>' + (row.id_jugador || '') + '</b></td>' +
+                        '<td>' + (row.contacto || '') + '</td>' +
+                        '<td style="color: #ff8585;">' + (row.motivo || '') + '</td>' +
+                        '<td>' +
+                            '<button class="btn-action btn-aceptar" onclick="quitarBlacklist(\'' + row.id + '\')">Remover Baneo</button>' +
+                        '</td>' +
+                    '</tr>';
                 });
-            } catch(e) { console.error(e); }
+            } catch(e) { 
+                console.error("Error al cargar lista negra:", e); 
+            }
         }
 
         async function quitarBlacklist(id) {
-            if(!confirm("¿Deseas remover a este jugador de la Lista Negra?")) return;
-            await fetch('/api/admin/eliminar_blacklist', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id: id })
-            });
-            cargarListaNegra();
+            if (!confirm("¿Deseas remover a este jugador de la Lista Negra?")) return;
+            try {
+                await fetch('/api/admin/eliminar_blacklist', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id: id })
+                });
+                cargarListaNegra();
+            } catch(e) {
+                console.error("Error al remover de blacklist:", e);
+            }
         }
 
-        window.onload = () => {
+        window.onload = function() {
             cargarConfiguracionEstado();
             cargarDatosDivision();
             cargarListaNegra();
