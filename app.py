@@ -1,5 +1,7 @@
 import os
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+import io
+import pandas as pd
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_file
 from functools import wraps
 from supabase import create_client, Client
 import re
@@ -272,8 +274,6 @@ def admin_eliminar_blacklist():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ... (código previo de tus rutas existentes) ...
-
 @app.route('/api/admin/vaciar/<division>', methods=['POST'])
 def vaciar_division(division):
     data = request.get_json() or {}
@@ -292,6 +292,114 @@ def vaciar_division(division):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ==========================================
+# NUEVO: DESCARGA DE EXCEL DE LA DIVISIÓN
+# ==========================================
+@app.route('/api/admin/exportar_excel/<division>', methods=['GET'])
+@admin_required
+def admin_exportar_excel(division):
+    tabla = limpiar_nombre_tabla(division)
+    divisiones_validas = ["valorant", "overwatch", "cs", "valorant_femenino", "fighting"]
+    if tabla not in divisiones_validas:
+        return jsonify({'error': 'División no válida'}), 400
+    if not supabase:
+        return jsonify({'error': 'Base de datos no conectada'}), 500
+    
+    try:
+        res = supabase.table(tabla).select('*').execute()
+        data = res.data if res.data else []
+        
+        filas_excel = []
+        for d in data:
+            fila = {
+                'ID / Player ID': d.get('player_id', ''),
+                'Contacto': d.get('contacto', ''),
+                'Edad': d.get('edad', ''),
+                'País': d.get('pais', ''),
+                'Servidores': d.get('servidores', ''),
+                'Objetivo': d.get('objetivo', ''),
+                'Rol': d.get('rol', ''),
+                'Rango Actual': d.get('rango_actual', ''),
+                'Peak Elo': d.get('peak_elo', ''),
+                'Experiencia': d.get('experiencia', ''),
+                'Sanciones / Baneos': d.get('baneos', ''),
+                'Estado': d.get('estado', 'Tryout')
+            }
+            if tabla == 'fighting':
+                fila['Juego Específico'] = d.get('juego_especifico', '')
+                fila['Personaje Main'] = d.get('personaje', '')
+            filas_excel.append(fila)
+            
+        df = pd.DataFrame(filas_excel)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name=division.upper()[:31])
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f'Postulaciones_{division.upper()}.xlsx'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ==========================================
+# NUEVO: CONSULTA DE ESTADO DE POSTULANTE
+# ==========================================
+@app.route('/api/consultar_estado', methods=['POST'])
+def consultar_estado():
+    if not supabase:
+        return jsonify({'error': 'Base de datos no conectada'}), 500
+        
+    data = request.get_json() or {}
+    busqueda = str(data.get('busqueda', '')).strip().lower()
+    
+    if not busqueda:
+        return jsonify({'error': 'Ingresa tu ID de jugador o contacto'}), 400
+        
+    resultados = []
+    
+    # 1. Buscar en lista negra
+    try:
+        res_bl = supabase.table('lista_negra').select('*').execute()
+        for fila in (res_bl.data or []):
+            id_j = str(fila.get('id_jugador', '')).strip().lower()
+            cont = str(fila.get('contacto', '')).strip().lower()
+            if busqueda == id_j or busqueda == cont or (busqueda in id_j and len(busqueda) > 3):
+                resultados.append({
+                    'division': 'General',
+                    'player_id': fila.get('id_jugador'),
+                    'estado': 'Blacklist',
+                    'motivo': 'Bloqueado por políticas del club'
+                })
+    except Exception as e:
+        print("Aviso consulta blacklist:", e)
+        
+    # 2. Buscar en las divisiones
+    divisiones = ['valorant', 'overwatch', 'cs', 'valorant_femenino', 'fighting']
+    for div in divisiones:
+        try:
+            res = supabase.table(div).select('*').execute()
+            for fila in (res.data or []):
+                id_j = str(fila.get('player_id', '')).strip().lower()
+                cont = str(fila.get('contacto', '')).strip().lower()
+                if busqueda == id_j or busqueda == cont or (busqueda in id_j and len(busqueda) > 3):
+                    resultados.append({
+                        'division': div.replace('_', ' ').upper(),
+                        'player_id': fila.get('player_id'),
+                        'rol': fila.get('rol'),
+                        'rango_actual': fila.get('rango_actual'),
+                        'estado': fila.get('estado', 'Tryout')
+                    })
+        except Exception as e:
+            print(f"Aviso consulta {div}:", e)
+            
+    if not resultados:
+        return jsonify({'encontrado': False, 'message': 'No se encontró ninguna postulación con esos datos.'})
+        
+    return jsonify({'encontrado': True, 'resultados': resultados})
 
 if __name__ == '__main__':
     app.run(debug=True)
