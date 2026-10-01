@@ -7,14 +7,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .btn-action {
-            padding: 6px 12px;
+            padding: 5px 10px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.85rem;
-            margin-right: 4px;
+            font-size: 0.75rem;
             color: #fff;
             font-weight: 600;
+            white-space: nowrap;
         }
         .btn-aceptar { background: #238636; }
         .btn-rechazar { background: #da3633; }
@@ -58,7 +58,7 @@
         </nav>
     </header>
 
-    <div style="max-width: 1300px; margin: 30px auto; padding: 0 20px;">
+    <div style="max-width: 1450px; margin: 30px auto; padding: 0 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
             <div>
                 <h1 style="font-size: 1.8rem;">📊 Gestión de Rosters y Postulaciones</h1>
@@ -94,8 +94,8 @@
                 </div>
             </div>
             
-            <div style="overflow-x: auto;">
-                <table>
+            <div class="table-container">
+                <table class="admin-table">
                     <thead id="thead-postulantes">
                         <!-- Cargado dinámicamente -->
                     </thead>
@@ -110,8 +110,8 @@
         <div class="form-card">
             <h3 style="color: #ff4655;">⛔ Lista Negra (Blacklist)</h3>
             <p style="font-size: 0.85rem; color: #a0a0b0; margin-bottom: 15px;">Jugadores bloqueados para futuras convocatorias.</p>
-            <div style="overflow-x: auto;">
-                <table>
+            <div class="table-container">
+                <table class="admin-table">
                     <thead>
                         <tr>
                             <th>ID Jugador</th>
@@ -234,7 +234,7 @@
                     }
 
                     tbody.innerHTML += '<tr>' +
-                        '<td><b>' + (row.player_id || '') + '</b></td>' +
+                        '<td class="col-id"><b>' + (row.player_id || '') + '</b></td>' +
                         '<td>' + (row.contacto || '') + '</td>' +
                         '<td>' + (row.edad || '') + '</td>' +
                         '<td>' + (row.pais || '-') + '</td>' +
@@ -242,15 +242,17 @@
                         '<td>' + (row.objetivo || '-') + '</td>' +
                         '<td>' + (row.rol || '-') + '<br><small style="color: #a0a0b0;">' + (row.rango_actual || '') + '</small></td>' +
                         '<td>' + (row.peak_elo || '-') + '</td>' +
-                        '<td style="max-width: 180px; font-size: 0.8rem; white-space: normal;">' + (row.experiencia || '-') + '</td>' +
+                        '<td class="col-experiencia">' + (row.experiencia || '-') + '</td>' +
                         '<td>' + (row.baneos || 'Limpio') + '</td>' +
                         colExtraBody +
-                        '<td><span style="padding: 4px 10px; border-radius: 6px; background: ' + bgEstado + '; color:#fff; font-weight: 600; font-size: 0.8rem;">' + est + '</span></td>' +
-                        '<td style="white-space: nowrap;">' +
-                            '<button class="btn-action btn-aceptar" onclick="actualizarEstadoPostulante(\'' + div + '\', \'' + row.id + '\', \'Aceptado\')">Aceptar</button>' +
-                            '<button class="btn-action btn-rechazar" onclick="actualizarEstadoPostulante(\'' + div + '\', \'' + row.id + '\', \'Rechazado\')">Rechazar</button>' +
-                            '<button class="btn-action btn-blacklist" onclick="enviarBlacklist(\'' + div + '\', \'' + row.id + '\', \'' + (row.player_id || '') + '\', \'' + (row.contacto || '') + '\')">Blacklist</button>' +
-                            '<button class="btn-action btn-eliminar" onclick="eliminarPostulante(\'' + div + '\', \'' + row.id + '\')">Eliminar</button>' +
+                        '<td><span class="badge-status" style="background: ' + bgEstado + ';">' + est + '</span></td>' +
+                        '<td>' +
+                            '<div class="action-buttons-group">' +
+                                '<button class="btn-action btn-aceptar" onclick="actualizarEstadoPostulante(\'' + div + '\', \'' + row.id + '\', \'Aceptado\')">Aceptar</button>' +
+                                '<button class="btn-action btn-rechazar" onclick="actualizarEstadoPostulante(\'' + div + '\', \'' + row.id + '\', \'Rechazado\')">Rechazar</button>' +
+                                '<button class="btn-action btn-blacklist" onclick="enviarBlacklist(\'' + div + '\', \'' + row.id + '\', \'' + (row.player_id || '') + '\', \'' + (row.contacto || '') + '\')">Blacklist</button>' +
+                                '<button class="btn-action btn-eliminar" onclick="eliminarPostulante(\'' + div + '\', \'' + row.id + '\')">Eliminar</button>' +
+                            '</div>' +
                         '</td>' +
                     '</tr>';
                 });
