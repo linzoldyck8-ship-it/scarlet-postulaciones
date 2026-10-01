@@ -119,29 +119,76 @@ option {
     transform: translateY(-2px);
 }
 
-/* TABLAS */
-table {
+/* --- OPTIMIZACIÓN Y AUTOAJUSTE DE TABLAS ADMINISTRATIVAS --- */
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 8px;
+}
+
+.admin-table {
     width: 100%;
     border-collapse: collapse;
     text-align: left;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: #fff;
+    table-layout: auto;
 }
 
-th {
-    background: rgba(33, 38, 45, 0.9);
+.admin-table th {
+    background: rgba(33, 38, 45, 0.95);
     padding: 12px 10px;
     border-bottom: 2px solid var(--accent-red);
     font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
 }
 
-td {
+.admin-table td {
     padding: 12px 10px;
     border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
 }
 
-tr:hover td {
+.admin-table tr:hover td {
     background: rgba(255, 255, 255, 0.04);
+}
+
+/* Clases específicas para celdas largas o críticas */
+.admin-table td.col-id {
+    font-weight: bold;
+    color: #ffffff;
+    word-break: break-all;
+    max-width: 140px;
+}
+
+.admin-table td.col-experiencia {
+    max-width: 220px;
+    min-width: 160px;
+    white-space: normal;
+    word-break: break-word;
+    font-size: 0.8rem;
+    color: #c4c4cc;
+}
+
+/* Diseño compacto y limpio para el estado */
+.badge-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Agrupación flexible de los botones de acción para que no se descentren */
+.action-buttons-group {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    align-items: center;
+    min-width: 210px;
 }
