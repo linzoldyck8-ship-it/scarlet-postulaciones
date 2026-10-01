@@ -147,7 +147,7 @@ option {
 }
 
 .admin-table td {
-    padding: 12px 10px;
+    padding: 10px 8px;
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
 }
@@ -156,39 +156,42 @@ option {
     background: rgba(255, 255, 255, 0.04);
 }
 
-/* Clases específicas para celdas largas o críticas */
+/* Columna ID / Jugador: Ancho controlado para evitar solapamientos */
 .admin-table td.col-id {
-    font-weight: bold;
-    color: #ffffff;
+    max-width: 150px;
+    min-width: 120px;
     word-break: break-all;
-    max-width: 140px;
+    white-space: normal !important;
+    font-size: 0.82rem;
 }
 
+/* Columna de Experiencia con ancho cómodo y salto de línea */
 .admin-table td.col-experiencia {
-    max-width: 220px;
-    min-width: 160px;
+    max-width: 200px;
+    min-width: 150px;
     white-space: normal;
     word-break: break-word;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #c4c4cc;
 }
 
-/* Diseño compacto y limpio para el estado */
+/* Etiqueta de Estado */
 .badge-status {
     display: inline-block;
     padding: 4px 10px;
     border-radius: 6px;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     text-align: center;
     white-space: nowrap;
 }
 
-/* Agrupación flexible de los botones de acción para que no se descentren */
+/* Grupo compacto de botones de acción para alinearse perfectamente */
 .action-buttons-group {
     display: flex;
-    gap: 5px;
     flex-wrap: wrap;
+    gap: 4px;
     align-items: center;
-    min-width: 210px;
+    min-width: 190px;
+    max-width: 220px;
 }
