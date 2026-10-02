@@ -318,8 +318,9 @@
                         <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid ${colorEstado};">
                             <p style="margin: 0 0 4px 0;"><b>División:</b> ${item.division}</p>
                             <p style="margin: 0 0 4px 0;"><b>Jugador:</b> ${item.player_id}</p>
-                            <p style="margin: 0;"><b>Estado:</b> <span style="color: ${colorEstado}; font-weight: bold;">${item.estado}</span></p>
-                            ${item.motivo ? `<p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #a0a0b0;">${item.motivo}</p>` : ''}
+                            <p style="margin: 0 0 ${item.motivo_rechazo ? '6px' : '0'};"><b>Estado:</b> <span style="color: ${colorEstado}; font-weight: bold;">${item.estado}</span></p>
+                            ${item.motivo_rechazo ? `<div style="background: rgba(248,81,73,0.1); padding: 6px 8px; border-radius: 4px; border-left: 3px solid #f85149; font-size: 0.85rem;"><b style="color: #f85149;">Motivo del rechazo:</b> ${item.motivo_rechazo}</div>` : ''}
+                            ${item.motivo && !item.motivo_rechazo ? `<p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #a0a0b0;">${item.motivo}</p>` : ''}
                         </div>
                     `;
                 });
