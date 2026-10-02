@@ -263,7 +263,7 @@
 
         async function vaciarBaseDatosDivision() {
             const div = document.getElementById('select-division').value;
-            const password = prompt('⚠️️ ¡ATENCIÓN! Estás a punto de BORRAR TODOS los datos registrados en la división ' + div.toUpperCase().replace('_', ' ') + '.\n\nPara confirmar, ingresa la contraseña de administrador:');
+            const password = prompt('⚠ ¡ATENCIÓN! Estás a punto de BORRAR TODOS los datos registrados en la división ' + div.toUpperCase().replace('_', ' ') + '.\n\nPara confirmar, ingresa la contraseña de administrador:');
             
             if (password === null) return;
 
@@ -292,11 +292,17 @@
         }
 
         async function actualizarEstadoPostulante(div, id, nuevoEstado) {
+            let motivo_rechazo = '';
+            if (nuevoEstado === 'Rechazado') {
+                motivo_rechazo = prompt("Ingrese el motivo del rechazo para este postulante:", "No cumple con el perfil requerido actualmente.");
+                if (motivo_rechazo === null) return; // Si cancela, no hace nada
+            }
+
             try {
                 await fetch('/api/admin/actualizar_estado', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ division: div, id: id, estado: nuevoEstado })
+                    body: JSON.stringify({ division: div, id: id, estado: nuevoEstado, motivo_rechazo: motivo_rechazo })
                 });
                 cargarDatosDivision();
             } catch(e) {
