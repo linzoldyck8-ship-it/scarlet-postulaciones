@@ -192,10 +192,17 @@ def admin_actualizar_estado():
     division = data.get('division')
     row_id = data.get('id')
     nuevo_estado = data.get('estado')
+    motivo_rechazo = data.get('motivo_rechazo', '') if nuevo_estado == 'Rechazado' else ''
     tabla = limpiar_nombre_tabla(division)
     
     try:
-        supabase.table(tabla).update({'estado': nuevo_estado}).eq('id', row_id).execute()
+        update_data = {'estado': nuevo_estado}
+        if nuevo_estado == 'Rechazado':
+            update_data['motivo_rechazo'] = motivo_rechazo
+        else:
+            update_data['motivo_rechazo'] = '' # Limpiar si cambia a aceptado o revisión
+            
+        supabase.table(tabla).update(update_data).eq('id', row_id).execute()
         return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -323,7 +330,8 @@ def admin_exportar_excel(division):
                 'Peak Elo': d.get('peak_elo', ''),
                 'Experiencia': d.get('experiencia', ''),
                 'Sanciones / Baneos': d.get('baneos', ''),
-                'Estado': d.get('estado', 'En revisión')
+                'Estado': d.get('estado', 'En revisión'),
+                'Motivo Rechazo': d.get('motivo_rechazo', '')
             }
             if tabla == 'fighting':
                 fila['Juego Específico'] = d.get('juego_especifico', '')
@@ -391,7 +399,8 @@ def consultar_estado():
                         'player_id': fila.get('player_id'),
                         'rol': fila.get('rol'),
                         'rango_actual': fila.get('rango_actual'),
-                        'estado': fila.get('estado', 'En revisión')
+                        'estado': fila.get('estado', 'En revisión'),
+                        'motivo_rechazo': fila.get('motivo_rechazo', '')
                     })
         except Exception as e:
             print(f"Aviso consulta {div}:", e)
