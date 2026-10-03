@@ -80,11 +80,18 @@
                             </select>
                         </div>
 
+                        <!-- ROL PRINCIPAL CON OPCIÓN OTROS -->
                         <div style="margin-bottom: 15px;">
                             <label><b>Rol Principal:</b></label>
-                            <select id="select-rol">
+                            <select id="select-rol" onchange="manejarCambioRol()">
                                 <!-- Opciones cargadas por JS -->
                             </select>
+                            <input 
+                                type="text" 
+                                id="input-rol-otro" 
+                                placeholder="Ej: Super Tulon IGL" 
+                                style="display: none; margin-top: 8px;"
+                            >
                         </div>
 
                         <div style="margin-bottom: 15px;">
@@ -132,7 +139,7 @@
                     </p>
                 </div>
 
-                <!-- CONSULTA DE ESTADO (ÚNICA) -->
+                <!-- CONSULTA DE ESTADO -->
                 <div class="form-card" style="margin-top: 20px;">
                     <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #ff4655;">🔎 Consultar Estado de Postulación</h3>
                     <p style="color: #a0a0b0; font-size: 0.85rem; margin-bottom: 15px;">Ingresa tu ID de Jugador o Usuario de Contacto para revisar el estado de tu solicitud.</p>
@@ -207,6 +214,20 @@
             actualizarOpcionesJuego();
         }
 
+        function manejarCambioRol() {
+            const selectRol = document.getElementById('select-rol');
+            const inputOtro = document.getElementById('input-rol-otro');
+            if (selectRol.value === 'Otros') {
+                inputOtro.style.display = 'block';
+                inputOtro.required = true;
+                inputOtro.focus();
+            } else {
+                inputOtro.style.display = 'none';
+                inputOtro.required = false;
+                inputOtro.value = '';
+            }
+        }
+
         function actualizarOpcionesJuego() {
             const div = document.getElementById('select-juego').value;
             const info = datosJuegos[div];
@@ -232,6 +253,8 @@
                 info.roles.forEach(rol => {
                     selectRol.innerHTML += `<option value="${rol}">${rol}</option>`;
                 });
+                selectRol.innerHTML += `<option value="Otros">Otros</option>`;
+                manejarCambioRol();
 
                 const extraFighting = document.getElementById('extra-fighting');
                 if (div === 'fighting') {
@@ -246,6 +269,15 @@
             event.preventDefault();
             const div = document.getElementById('select-juego').value;
 
+            const selectRolVal = document.getElementById('select-rol').value;
+            const inputRolOtroVal = document.getElementById('input-rol-otro').value.trim();
+            const rolFinal = (selectRolVal === 'Otros') ? inputRolOtroVal : selectRolVal;
+
+            if (selectRolVal === 'Otros' && !inputRolOtroVal) {
+                alert('⚠️ Por favor escribe tu rol personalizado.');
+                return;
+            }
+
             const payload = {
                 player_id: document.getElementById('player_id').value,
                 contacto: document.getElementById('contacto').value,
@@ -253,7 +285,7 @@
                 pais: document.getElementById('pais').value,
                 servidores: document.getElementById('servidores').value,
                 objetivo: document.getElementById('objetivo').value,
-                rol: document.getElementById('select-rol').value,
+                rol: rolFinal,
                 rango_actual: document.getElementById('rango_actual').value,
                 peak_elo: document.getElementById('peak_elo').value,
                 experiencia: document.getElementById('experiencia').value,
