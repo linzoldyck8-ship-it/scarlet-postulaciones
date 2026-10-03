@@ -141,6 +141,11 @@ def postular(division):
         except Exception as e:
             print("Aviso duplicados:", e)
 
+        # Procesar rol (si viene 'Otros', se toma el rol personalizado)
+        rol_recibido = str(data.get('rol', 'Flex')).strip()
+        if rol_recibido.lower() == 'otros' and data.get('rol_personalizado'):
+            rol_recibido = str(data.get('rol_personalizado')).strip()
+
         nueva_data = {
             "player_id": player_id,
             "contacto": contacto,
@@ -150,7 +155,7 @@ def postular(division):
             "objetivo": str(data.get('objetivo', '')),
             "experiencia": str(data.get('experiencia', '')),
             "rango_actual": str(data.get('rango_actual', '')),
-            "rol": str(data.get('rol', 'Flex')),
+            "rol": rol_recibido,
             "peak_elo": str(data.get('peak_elo', '')),
             "baneos": str(data.get('baneos', 'Limpio')),
             "estado": "En revisión",
